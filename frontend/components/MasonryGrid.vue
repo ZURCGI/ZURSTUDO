@@ -107,6 +107,9 @@
           :aria-label="`360度全景: ${item.description || item.publicId}`"
           :aria-describedby="`desc-${item.publicId}`"
           role="img"
+          @touchstart="onView360TouchStart"
+          @touchmove="onView360TouchMove"
+          @touchend="onView360TouchEnd"
         >
           <!-- 載入提示 -->
           <div 
@@ -114,6 +117,22 @@
             style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: #000; color: #fff; font-size: 14px; z-index: 1;"
           >
             載入 360° 全景中...
+          </div>
+          
+          <!-- 手機端控制提示 -->
+          <div 
+            v-if="window.innerWidth < 768"
+            :id="`mobile-controls-${item.publicId}`"
+            style="position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 20px; font-size: 12px; z-index: 2;"
+          >
+            <span>👆 拖動查看</span>
+            <span>👌 雙指縮放</span>
+            <button 
+              :onclick="`toggleFullscreen('${item.publicId}')`"
+              style="background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px;"
+            >
+              全螢幕
+            </button>
           </div>
         </div>
 
@@ -252,7 +271,20 @@ watch(
                 // 防止手機端跳動
                 defaultZoomLvl: 0,
                 minZoomLvl: 0,
-                maxZoomLvl: 2
+                maxZoomLvl: 2,
+                // 手機端觸控設置
+                touchPan: true,
+                touchZoom: true,
+                // 防止滾動衝突
+                preventScroll: true,
+                // 手機端控制優化
+                moveSpeed: 2.5,
+                zoomSpeed: 2.0,
+                // 手機端觸控靈敏度
+                touchmoveTwoFingers: true,
+                // 手機端防止意外操作
+                mousewheel: false,
+                mousemove: false
               }),
               // 桌面端保持原有設置
               ...(!isMobile && {
@@ -605,6 +637,64 @@ function observeSentinel() {
 function hasMore() {
   return hasMoreProp !== false
 }
+
+// VIEW360 觸控事件處理
+function onView360TouchStart(event: TouchEvent) {
+  // 只在手機端處理
+  if (window.innerWidth < 768) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // 標記正在操作 VIEW360
+    const target = event.currentTarget as HTMLElement;
+    target.setAttribute('data-view360-active', 'true');
+  }
+}
+
+function onView360TouchMove(event: TouchEvent) {
+  // 只在手機端處理
+  if (window.innerWidth < 768) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // 防止頁面滾動
+    const target = event.currentTarget as HTMLElement;
+    if (target.getAttribute('data-view360-active') === 'true') {
+      event.preventDefault();
+    }
+  }
+}
+
+function onView360TouchEnd(event: TouchEvent) {
+  // 只在手機端處理
+  if (window.innerWidth < 768) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // 清除標記
+    const target = event.currentTarget as HTMLElement;
+    target.removeAttribute('data-view360-active');
+  }
+}
+
+// 手機端 VIEW360 全螢幕切換
+function toggleFullscreen(viewerId: string) {
+  if (window.innerWidth < 768) {
+    const viewer = viewerMap.get(viewerId);
+    if (viewer) {
+      try {
+        viewer.toggleFullscreen();
+      } catch (error) {
+        console.error('Failed to toggle fullscreen:', error);
+      }
+    }
+  }
+}
+
+// 暴露函數到全域
+if (process.client) {
+  (window as any).toggleFullscreen = toggleFullscreen;
+}
 </script>
 
 <style scoped>
@@ -743,6 +833,9 @@ function hasMore() {
     min-height: 200px !important;
     background: #000 !important;
     border-radius: 4px !important;
+    /* 防止滾動衝突 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   
   /* 手機端 VIEW360 內部容器 */
@@ -756,6 +849,10 @@ function hasMore() {
     height: 100% !important;
     transform: none !important;
     transition: none !important;
+    /* 防止滾動衝突 */
+    touch-action: pan-x pan-y pinch-zoom !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   
   /* 手機端 VIEW360 畫布 */
@@ -763,6 +860,17 @@ function hasMore() {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
+    /* 防止滾動衝突 */
+    touch-action: pan-x pan-y pinch-zoom !important;
+  }
+  
+  /* 手機端 VIEW360 操作時防止頁面滾動 */
+  .masonry-item div[role="img"][data-view360-active="true"] {
+    touch-action: none !important;
+  }
+  
+  .masonry-item div[role="img"][data-view360-active="true"] .psv-container {
+    touch-action: pan-x pan-y pinch-zoom !important;
   }
   
   /* 手機端影片載入狀態 */
