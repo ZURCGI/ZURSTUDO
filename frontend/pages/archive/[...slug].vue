@@ -123,7 +123,6 @@ import { useAuth } from '~/composables/useAuth'
 import { gsap } from 'gsap'
 import DetailPageImage from '@/components/DetailPageImage.vue'
 import { useErrorHandler } from '~/composables/useErrorHandler'
-import { AutorotatePlugin } from '@photo-sphere-viewer/autorotate-plugin';
 
 interface MediaItem {
   publicId: string
@@ -239,10 +238,7 @@ watch(media, async (newMedia) => {
           viewerInstance.value = new Viewer({
             container: viewerContainer.value,
             panorama: newMedia.url,
-            navbar: ['zoom', 'fullscreen'],
-            plugins: [
-              [AutorotatePlugin, { autorotateSpeed: '2rpm' }]
-            ],
+            navbar: ['autorotate', 'zoom', 'fullscreen'],
             defaultZoomLvl: 0,
             moveSpeed: 1.5,
             zoomSpeed: 1,
@@ -254,11 +250,6 @@ watch(media, async (newMedia) => {
               width: viewerContainer.value.offsetWidth,
               height: viewerContainer.value.offsetHeight
             }
-          });
-          
-          // 監聽自動旋轉狀態變化
-          viewerInstance.value.addEventListener('autorotate', (e: any) => {
-            autoRotate.value = e.detail.enabled;
           });
           
           animateEntrance();
@@ -443,12 +434,13 @@ function resetView() {
 
 function toggleAutoRotate() {
   if (viewerInstance.value) {
-    const autorotate = viewerInstance.value.getPlugin(AutorotatePlugin);
-    if (autorotate) {
+    // 使用原生 navbar 控制
+    const navbar = viewerInstance.value.getPlugin('navbar');
+    if (navbar) {
       if (autoRotate.value) {
-        autorotate.stop();
+        navbar.disableAutorotate();
       } else {
-        autorotate.start();
+        navbar.enableAutorotate();
       }
     }
   }
