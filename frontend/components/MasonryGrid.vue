@@ -118,18 +118,58 @@
             載入 360° 全景中...
           </div>
           
+          <!-- 桌面版控制列 -->
+          <div 
+            v-if="!isMobile"
+            :id="`desktop-controls-${item.publicId}`"
+            style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.75); color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 12px; z-index: 10; backdrop-filter: blur(8px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); transition: opacity 0.3s ease;"
+            onmouseover="this.style.opacity='1'"
+            onmouseout="this.style.opacity='0.8'"
+          >
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">🖱️</span>
+                <span style="font-size: 11px;">拖動查看</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">🔍</span>
+                <span style="font-size: 11px;">滾輪縮放</span>
+              </span>
+              <button 
+                :onclick="`toggleFullscreen('${item.publicId}')`"
+                style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 15px; font-size: 11px; font-weight: 500; transition: all 0.2s ease; cursor: pointer; margin-left: 8px;"
+                onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+              >
+                <span style="margin-right: 4px;">⛶</span>
+                全螢幕
+              </button>
+            </div>
+          </div>
+          
           <!-- 手機端控制提示 -->
           <div 
             v-if="isMobile"
             :id="`mobile-controls-${item.publicId}`"
-            style="position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 20px; font-size: 12px; z-index: 2;"
+            style="position: absolute; bottom: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); color: #fff; padding: 12px 16px; border-radius: 25px; font-size: 13px; z-index: 10; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.3);"
           >
-            <span>👆 拖動查看</span>
-            <span>👌 雙指縮放</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 16px;">👆</span>
+                <span style="font-size: 11px;">拖動</span>
+              </span>
+              <span style="display: flex; align-items: center; gap: 4px; margin-left: 12px;">
+                <span style="font-size: 16px;">👌</span>
+                <span style="font-size: 11px;">縮放</span>
+              </span>
+            </div>
             <button 
               :onclick="`toggleFullscreen('${item.publicId}')`"
-              style="background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px;"
+              style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 500; transition: all 0.2s ease; cursor: pointer;"
+              onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.15)'"
             >
+              <span style="margin-right: 4px;">⛶</span>
               全螢幕
             </button>
           </div>
