@@ -12,19 +12,11 @@ export default defineNuxtConfig({
 
   // ── 靜態生成配置 ─────────────────────────────────────
   nitro: {
-    preset: 'static',
-    prerender: {
-      crawlLinks: false,
-      routes: []
-    },
-    static: {
-      // 確保靜態檔案正確處理
-      maxAge: 31536000
-    }
+    preset: 'static'
   },
 
   // ── SSR 配置 ─────────────────────────────────────────
-  ssr: true,
+  ssr: false,
 
   // ── TypeScript 嚴格模式 ──────────────────────────────────
   typescript: { strict: true },
