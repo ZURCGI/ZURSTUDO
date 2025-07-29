@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-0">
     <div class="w-full" style="aspect-ratio: 16/9; min-height: 300px;">
-      <GridDistortion :imageSrc="`${$config.public.cloudinaryUrl || 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp'}`" class="w-full h-full" />
+      <GridDistortion :imageSrc="config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp'" class="w-full h-full" />
     </div>
 
     <section ref="secAbout" class="max-w-4xl mx-auto py-8 px-4 opacity-0">
@@ -46,7 +46,7 @@
         </div>
         <div class="flex justify-start">
           <img
-            :src="`${$config.public.cloudinaryUrl || 'https://res.cloudinary.com/dfiwsow3h/image/upload/f_auto,q_auto/v1749631606/line-qr_xvdcic.png'}`"
+            :src="config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/f_auto,q_auto/v1749631606/line-qr_xvdcic.png` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/f_auto,q_auto/v1749631606/line-qr_xvdcic.png'"
             alt="ZUR LINE QR Code"
             class="w-48 h-48 object-contain border rounded-lg shadow hover:scale-105 transition-transform duration-300"
             loading="lazy"
@@ -88,13 +88,15 @@ import { useHead } from '#app'
 import { useAppSeoMeta } from '~/composables/useAppSeoMeta'
 import TextType from '~/components/TextType'
 
+const config = useRuntimeConfig()
+
 useHead({
   title: '聯絡我們 | ZUR STUDIO',
   meta: [
     { name: 'description', content: 'ZUR 提供國際級 3D 效果圖、動畫、光雕投影與虛擬實境服務，專案橫跨台灣、歐美與中東，合作對象涵蓋眾多頂級品牌，助力豪宅、商辦、展覽與產品視覺化。' },
     { property: 'og:title', content: '聯絡我們 | ZUR STUDIO' },
     { property: 'og:description', content: 'ZUR delivers world-class 3D renderings, animation, projection mapping, and VR services for luxury real estate, commercial, and product visualization. Our portfolio spans Taiwan, Europe, the Middle East, and the US, serving top clients like Zaha Hadid, IKEA, BMW, and Marriott.' },
-    { property: 'og:image', content: `${$config.public.cloudinaryUrl || 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749631606/line-qr_xvdcic.png'}` },
+    { property: 'og:image', content: config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/v1749631606/line-qr_xvdcic.png` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749631606/line-qr_xvdcic.png' },
     { name: 'robots', content: 'index, follow' }
   ]
 })

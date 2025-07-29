@@ -110,7 +110,7 @@ export function useAppSeoMeta(options: SeoOptions) {
       '@type': 'Organization',
       'name': 'ZUR CGI STUDIO',
       'url': 'https://zurcgi.com/',
-      'logo': process.env.CLOUDINARY_DEFAULT_IMAGE || 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp',
+      'logo': config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp',
       'description': description,
       'foundingDate': '2020',
       'address': {
@@ -140,7 +140,7 @@ export function useAppSeoMeta(options: SeoOptions) {
       '@context': 'https://schema.org',
       '@type': 'LocalBusiness',
       'name': 'ZUR CGI STUDIO',
-      'image': process.env.CLOUDINARY_DEFAULT_IMAGE || 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp',
+      'image': config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp',
       'description': description,
       'address': {
         '@type': 'PostalAddress',
@@ -157,7 +157,7 @@ export function useAppSeoMeta(options: SeoOptions) {
       },
       'telephone': '+886-4-36035345',
       'email': 'zurcgistudio@gmail.com',
-      'url': s.ogImage || process.env.CLOUDINARY_DEFAULT_IMAGE || 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp',
+      'url': s.ogImage || (config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/w_800/v1749830240/ZURSTUDIO_nf1k8o.webp'),
       'openingHours': 'Mo-Fr 09:00-18:00',
       'priceRange': '$$',
       'serviceArea': {

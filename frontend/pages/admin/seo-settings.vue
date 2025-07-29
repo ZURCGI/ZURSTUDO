@@ -205,7 +205,7 @@ definePageMeta({
 import { ref, computed, onMounted } from 'vue'
 import { useRuntimeConfig } from '#app'
 
-const { public: { apiBase } } = useRuntimeConfig()
+const config = useRuntimeConfig()
 const form = ref({
   siteTitle: '',
   siteTitleEn: '',
@@ -244,7 +244,7 @@ const faqTab = ref('zh')
 
 // 取得現有設定
 onMounted(async () => {
-  const data = await $fetch(`${apiBase}/settings`, { credentials: 'include' })
+  const data = await $fetch(`${config.public.apiBase}/settings`, { credentials: 'include' })
   Object.assign(form.value, data)
   if (!Array.isArray(form.value.faqListZh)) {
     form.value.faqListZh = []
@@ -314,7 +314,7 @@ const seoScoreColor = computed(() => seoScore.value >= 80 ? 'text-green-600' : (
 function autoOptimizeSEO() {
   // 基本 SEO
   if (!form.value.siteTitle) form.value.siteTitle = 'ZUR 官方網站 | 專業 3D 效果圖/動畫/光雕/VR'
-  if (!form.value.ogImage) form.value.ogImage = $config.public.cloudinaryUrl || 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp'
+  if (!form.value.ogImage) form.value.ogImage = config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp'
   if (!form.value.favicon) form.value.favicon = '/favicon.ico'
   if (!form.value.robots) form.value.robots = 'User-agent: *\nAllow: /'
   if (!form.value.sitemap) form.value.sitemap = '/sitemap.xml'
@@ -358,7 +358,7 @@ function autoOptimizeSEO() {
 
 // 儲存設定
 async function saveSettings() {
-  await $fetch(`${apiBase}/settings`, {
+  await $fetch(`${config.public.apiBase}/settings`, {
     method: 'PUT',
     body: form.value,
     credentials: 'include',
