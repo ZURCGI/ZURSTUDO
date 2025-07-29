@@ -10,6 +10,14 @@ export default defineNuxtConfig({
     public: 'public'
   },
 
+  // ── 靜態生成配置 ─────────────────────────────────────
+  nitro: {
+    preset: 'node-server'
+  },
+
+  // ── SSR 配置 ─────────────────────────────────────────
+  ssr: true,
+
   // ── TypeScript 嚴格模式 ──────────────────────────────────
   typescript: { strict: true },
 
