@@ -196,8 +196,15 @@ const nameError = ref('')
 const loadProjects = async () => {
   try {
     loading.value = true
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
     const response = await $fetch<Project[]>(`${config.public.apiBase}/projects`, {
-      credentials: 'include'
+      headers
     })
     projects.value = response
   } catch (error: any) {
@@ -281,6 +288,12 @@ const saveProject = async () => {
   
   try {
     saving.value = true
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
     
     if (showEditModal.value && editingProject.value) {
       // Update existing project
@@ -288,14 +301,14 @@ const saveProject = async () => {
       await $fetch(`${config.public.apiBase}/projects/${editingProject.value.id}`, {
         method: 'PUT',
         body: updateData,
-        credentials: 'include'
+        headers
       })
     } else {
       // Create new project
       await $fetch(`${config.public.apiBase}/projects`, {
         method: 'POST',
         body: form.value,
-        credentials: 'include'
+        headers
       })
     }
     
@@ -328,9 +341,16 @@ const deleteProject = async (project: Project) => {
   }
   
   try {
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
     await $fetch(`${config.public.apiBase}/projects/${encodeURIComponent(project.name)}`, {
       method: 'DELETE',
-      credentials: 'include'
+      headers
     })
     await loadProjects()
     showToast('專案刪除成功', 'success')

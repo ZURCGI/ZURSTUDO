@@ -202,8 +202,15 @@ const renderTrendChart = () => {
 const loadStats = async () => {
   try {
     loading.value = true
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
     const response = await $fetch(`${config.public.apiBase}/analytics/dashboard`, {
-      credentials: 'include'
+      headers
     })
     stats.value = response
   } catch (error) {

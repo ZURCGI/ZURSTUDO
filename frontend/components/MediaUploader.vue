@@ -351,7 +351,6 @@ async function getUploadSignature(): Promise<SignatureData> {
       'Content-Type': 'application/json',
       ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
     },
-    credentials: 'include',
     body: {
       folder: folderMap[mediaType.value],
       resource_type: resourceTypeMap[mediaType.value],
@@ -420,7 +419,6 @@ async function notifyBackend(uploadResult: CloudinaryUploadResult, signatureData
       'Content-Type': 'application/json',
       ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
     },
-    credentials: 'include',
     body: payload
   })
 
@@ -541,8 +539,7 @@ onMounted(async () => {
       headers: {
         'Content-Type': 'application/json',
         ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
-      },
-      credentials: 'include'
+      }
     })
     projectOptions.value = res.map((p: { name: string }) => p.name)
     if (projectOptions.value.length > 0) project.value = projectOptions.value[0]
@@ -565,7 +562,6 @@ watch(customProject, async (val, oldVal) => {
           'Content-Type': 'application/json',
           ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
         },
-        credentials: 'include',
         body: { name: val }
       })
       // 重新載入專案名稱
@@ -574,8 +570,7 @@ watch(customProject, async (val, oldVal) => {
         headers: {
           'Content-Type': 'application/json',
           ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
-        },
-        credentials: 'include'
+        }
       })
       projectOptions.value = res.map((p: { name: string }) => p.name)
       project.value = val
@@ -671,8 +666,7 @@ async function confirmDeleteProject(name: string) {
       headers: {
         'Content-Type': 'application/json',
         ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
-      },
-      credentials: 'include'
+      }
     })
     // 刪除成功後移除本地 options
     projectOptions.value = projectOptions.value.filter(p => p !== name)

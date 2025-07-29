@@ -56,9 +56,14 @@ onMounted(async () => {
     console.log('[VisitorMap] Making request with token:', token.value ? 'exists' : 'missing')
     
     // 發送 API 請求
+    const headers: Record<string, string> = {}
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
     const res = await fetch(
       `${config.public.apiBase}/analytics/visit-stats`,
-      { credentials: 'include' }
+      { headers }
     )
 
     if (!res.ok) {

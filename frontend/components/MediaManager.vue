@@ -82,8 +82,8 @@
             <template v-if="editingId === item.id">
               <input
                 v-model="editName"
-                @keyup.enter="saveEdit(item)"
-                @blur="saveEdit(item)"
+                @keyup.enter="renameItem(item)"
+                @blur="renameItem(item)"
                 class="border border-primary rounded px-2 py-1 text-sm w-32"
                 autofocus
               />
@@ -166,13 +166,20 @@ function startEdit(item: MediaItem) {
   editName.value = item.title
 }
 
-async function saveEdit(item: MediaItem) {
+const renameItem = async (item: MediaItem) => {
   if (!editName.value.trim()) return
   try {
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
     await $fetch(`${config.public.apiBase}/media/${item.type}/${item.id}/rename`, {
       method: 'PATCH',
       body: { newName: editName.value },
-      credentials: 'include'
+      headers
     })
     item.title = editName.value
     editingId.value = null
@@ -203,9 +210,19 @@ const selectItem = (item: MediaItem) => {
 const deleteItem = async (item: MediaItem) => {
   if (confirm(`確定要刪除 "${item.title}" 嗎？`)) {
     try {
+      const { token } = useAuth()
+      const headers: Record<string, string> = {}
+      
+      if (token.value) {
+        headers['Authorization'] = `Bearer ${token.value}`
+      }
+      
       // 只取純 publicId，不含資料夾
       const purePublicId = item.publicId.split('/').pop();
-      await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { method: 'DELETE', credentials: 'include' });
+      await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
+        method: 'DELETE', 
+        headers 
+      });
       media.value = media.value.filter(m => m.id !== item.id);
     } catch (error) {
       console.error('删除失敗:', error);
@@ -217,7 +234,16 @@ const loadMore = async () => {
   if (loading.value || !hasMore.value) return;
   loading.value = true;
   try {
-    const response = await $fetch(`${config.public.apiBase}/media/list?page=${page.value}&limit=${pageSize}`, { credentials: 'include' });
+    const { token } = useAuth()
+    const headers: Record<string, string> = {}
+    
+    if (token.value) {
+      headers['Authorization'] = `Bearer ${token.value}`
+    }
+    
+    const response = await $fetch(`${config.public.apiBase}/media/list?page=${page.value}&limit=${pageSize}`, { 
+      headers 
+    });
     const newItems = response.items || [];
     if (page.value === 1) {
       media.value = newItems;
