@@ -29,9 +29,9 @@ export class AnalyticsController {
   async getVisitStats(@Req() req: AuthenticatedRequest) {
     this.logger.debug(
       'VisitStats Authorization header:',
-      req.headers['authorization'],
+      (req as any).headers?.['authorization'],
     );
-    this.logger.debug('VisitStats Cookies:', req.cookies);
+    this.logger.debug('VisitStats Cookies:', (req as any).cookies);
     this.logger.debug('VisitStats User:', req.user);
     return this.analyticsService.getVisitStats();
   }
