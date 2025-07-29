@@ -1,11 +1,6 @@
 <!-- pages/admin/login.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900 font-sans">
-    <!-- Debug info -->
-    <div class="fixed top-0 left-0 bg-red-500 text-white p-2 text-xs z-50">
-      Login Page Loaded - Route: {{ $route.path }}
-    </div>
-    
     <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl space-y-6 border border-gray-200">
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800">ZUR Admin</h1>
