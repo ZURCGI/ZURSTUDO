@@ -121,7 +121,7 @@
           
           <!-- 手機端控制提示 -->
           <div 
-            v-if="window.innerWidth < 768"
+            v-if="isMobile"
             :id="`mobile-controls-${item.publicId}`"
             style="position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 20px; font-size: 12px; z-index: 2;"
           >
@@ -177,6 +177,14 @@ const rowGap = computed(() => rowGapProp ?? gap ?? 8)
 const columnsRef = ref(columnsProp ?? 3)
 const columns = computed(() => columnsProp ?? columnsRef.value)
 
+// 手機端檢測
+const isMobile = computed(() => {
+  if (process.client && window) {
+    return window.innerWidth < 768
+  }
+  return false
+})
+
 // 用來初始化 360° viewer
 const viewerMap = new Map<string, any>()
 
@@ -210,7 +218,7 @@ watch(
             const { Viewer } = await import('@photo-sphere-viewer/core')
             
             // 檢測是否為手機端
-            const isMobile = window.innerWidth < 768
+            const isMobileDevice = isMobile.value
             
             // 確保容器沒有白邊
             el.style.margin = '0'
@@ -223,7 +231,7 @@ watch(
             el.style.height = '100%'
             
             // 手機端特殊設置
-            if (isMobile) {
+            if (isMobileDevice) {
               el.style.minHeight = '200px'
               el.style.backgroundColor = '#000'
               el.style.borderRadius = '4px'
@@ -242,17 +250,17 @@ watch(
               defaultZoomLvl: 0,
               defaultYaw: 2.0,   // 右側（約114.6度）
               defaultPitch: 0.0,  // 水平
-              moveSpeed: isMobile ? 2.0 : 1.5,  // 手機端移動速度更快
-              zoomSpeed: isMobile ? 1.5 : 1,    // 手機端縮放速度更快
+              moveSpeed: isMobileDevice ? 2.0 : 1.5,  // 手機端移動速度更快
+              zoomSpeed: isMobileDevice ? 1.5 : 1,    // 手機端縮放速度更快
               // 手機端優化
               touchmoveTwoFingers: true,
-              mousewheel: !isMobile,
-              mousemove: !isMobile,
+              mousewheel: !isMobileDevice,
+              mousemove: !isMobileDevice,
               // 觸控優化
               touchPan: true,
               touchZoom: true,
               // 手機端特殊設置
-              ...(isMobile && {
+              ...(isMobileDevice && {
                 // 手機端禁用滑鼠事件
                 mousewheel: false,
                 mousemove: false,
@@ -287,7 +295,7 @@ watch(
                 mousemove: false
               }),
               // 桌面端保持原有設置
-              ...(!isMobile && {
+              ...(!isMobileDevice && {
                 renderParameters: {
                   antialias: false,
                   alpha: false
@@ -295,7 +303,7 @@ watch(
               })
             }))
             
-            console.log('[MasonryGrid] VIEW360 initialized for:', i.publicId, 'mobile:', isMobile)
+            console.log('[MasonryGrid] VIEW360 initialized for:', i.publicId, 'mobile:', isMobileDevice)
           } catch (error) {
             console.error('Failed to load Photo Sphere Viewer:', error)
             // 顯示錯誤信息
@@ -390,7 +398,7 @@ function onVideoLoaded(event: Event) {
   console.log('[MasonryGrid] Video loaded:', video.src)
   
   // 手機端特殊處理
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     // 確保影片在手機端正確顯示
     video.style.display = 'block'
     video.style.width = '100%'
@@ -426,7 +434,7 @@ function onVideoError(event: Event) {
   console.error('[MasonryGrid] Video error:', video.src, event)
   
   // 手機端錯誤處理
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     // 標記錯誤狀態
     video.setAttribute('data-error', 'true')
     
@@ -456,7 +464,7 @@ function onVideoCanPlay(event: Event) {
   console.log('[MasonryGrid] Video can play:', video.src)
   
   // 手機端準備播放
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     // 確保影片可見
     video.style.opacity = '1'
     video.style.visibility = 'visible'
@@ -540,7 +548,7 @@ onMounted(async () => {
   }
   
   // 手機端影片初始化
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     const videos = document.querySelectorAll('.masonry-item video')
     videos.forEach((video) => {
       const videoElement = video as HTMLVideoElement
@@ -686,7 +694,7 @@ function hasMore() {
 // VIEW360 觸控事件處理
 function onView360TouchStart(event: TouchEvent) {
   // 只在手機端處理
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -698,7 +706,7 @@ function onView360TouchStart(event: TouchEvent) {
 
 function onView360TouchMove(event: TouchEvent) {
   // 只在手機端處理
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -712,7 +720,7 @@ function onView360TouchMove(event: TouchEvent) {
 
 function onView360TouchEnd(event: TouchEvent) {
   // 只在手機端處理
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -724,7 +732,7 @@ function onView360TouchEnd(event: TouchEvent) {
 
 // 手機端 VIEW360 全螢幕切換
 function toggleFullscreen(viewerId: string) {
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     const viewer = viewerMap.get(viewerId);
     if (viewer) {
       try {
@@ -743,7 +751,7 @@ if (process.client) {
 
 // 顯示手機端播放按鈕
 function showPlayButton(video: HTMLVideoElement) {
-  if (window.innerWidth < 768) {
+  if (isMobile.value) {
     const playButton = document.createElement('div')
     playButton.className = 'mobile-play-button'
     playButton.style.cssText = `
