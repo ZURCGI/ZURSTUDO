@@ -4,7 +4,7 @@
     env: static
     rootDir: frontend
     plan: free
-    buildCommand: npm install && npm run generate
+    buildCommand: npm install && npm run build
     staticPublishPath: .output/public
     envVars:
       - key: NODE_ENV
