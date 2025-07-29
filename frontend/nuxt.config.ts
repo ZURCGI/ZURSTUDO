@@ -140,6 +140,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // 公開配置
     public: {
+      // API 基礎 URL
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com'),
       // 性能監控配置
       performanceMonitoring: {
         enabled: process.env.NODE_ENV === 'development',

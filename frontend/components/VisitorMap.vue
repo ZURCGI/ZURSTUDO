@@ -55,6 +55,10 @@ onMounted(async () => {
     
     console.log('[VisitorMap] Making request with token:', token.value ? 'exists' : 'missing')
     
+    // 檢查 API 基礎 URL
+    const apiBase = config.public.apiBase || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com')
+    console.log('[VisitorMap] Using API base:', apiBase)
+    
     // 發送 API 請求
     const headers: Record<string, string> = {}
     if (token.value) {
@@ -62,7 +66,7 @@ onMounted(async () => {
     }
     
     const res = await fetch(
-      `${config.public.apiBase}/analytics/visit-stats`,
+      `${apiBase}/analytics/visit-stats`,
       { headers }
     )
 
@@ -134,7 +138,7 @@ onMounted(async () => {
     // 新增詳細 log
     console.error('[VisitorMap] API 請求失敗:', {
       token: token.value,
-      api: `${config.public.apiBase}/analytics/visit-stats`,
+      api: `${apiBase}/analytics/visit-stats`,
       error: e,
     })
     error.value = `訪客統計載入失敗：${e?.message || e}`
