@@ -411,17 +411,8 @@ function onVideoLoaded(event: Event) {
     video.playsInline = true
     video.muted = false // 允許聲音
     
-    // 手機端自動播放嘗試
-    try {
-      video.play().catch(error => {
-        console.log('[MasonryGrid] Auto-play failed, user interaction required:', error)
-        // 顯示播放按鈕
-        showPlayButton(video)
-      })
-    } catch (error) {
-      console.log('[MasonryGrid] Auto-play not supported:', error)
-      showPlayButton(video)
-    }
+    // 手機端不自動播放，顯示播放按鈕
+    showPlayButton(video)
   }
   
   // 觸發動畫
@@ -587,6 +578,13 @@ onMounted(async () => {
           videoElement.pause()
         }
       })
+      
+      // 確保播放按鈕顯示
+      setTimeout(() => {
+        if (videoElement.paused) {
+          showPlayButton(videoElement)
+        }
+      }, 100)
     })
     
     // 手機端 VIEW360 初始化
@@ -763,20 +761,32 @@ function showPlayButton(video: HTMLVideoElement) {
       color: white;
       border: none;
       border-radius: 50%;
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 32px;
       cursor: pointer;
       z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
     `
     playButton.innerHTML = '▶'
     playButton.onclick = () => {
       video.play()
       playButton.remove()
     }
+    
+    // 添加觸控反饋
+    playButton.addEventListener('touchstart', () => {
+      playButton.style.transform = 'translate(-50%, -50%) scale(0.95)'
+    })
+    
+    playButton.addEventListener('touchend', () => {
+      playButton.style.transform = 'translate(-50%, -50%) scale(1)'
+    })
+    
     video.parentElement?.appendChild(playButton)
   }
 }
@@ -918,20 +928,26 @@ function showPlayButton(video: HTMLVideoElement) {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 32px;
     cursor: pointer;
     z-index: 10;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
   
   .masonry-item .mobile-play-button:hover {
     background: rgba(0,0,0,0.9);
     transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+  }
+  
+  .masonry-item .mobile-play-button:active {
+    transform: translate(-50%, -50%) scale(0.95);
   }
   
   /* 手機端 VIEW360 容器優化 */
