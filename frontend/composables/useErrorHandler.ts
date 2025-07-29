@@ -206,4 +206,3 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
     hasErrors
   }
 } 
-} 
