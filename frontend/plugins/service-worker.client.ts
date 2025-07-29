@@ -1,6 +1,7 @@
 // plugins/service-worker.client.ts
 export default defineNuxtPlugin(() => {
-  if (process.client && 'serviceWorker' in navigator) {
+  // 暫時禁用 Service Worker 以專注於 API 問題
+  if (process.client && 'serviceWorker' in navigator && false) {
     // 註冊 Service Worker
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
