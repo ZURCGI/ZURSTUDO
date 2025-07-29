@@ -70,11 +70,11 @@
           x5-playsinline
           x5-video-player-type="h5"
           x5-video-player-fullscreen="true"
-          muted
           @loadedmetadata="onVideoLoaded"
           @error="onVideoError"
           @canplay="onVideoCanPlay"
           @loadstart="onVideoLoadStart"
+          @click="onVideoClick"
         >
           <source :src="item.url" type="video/mp4" />
           <source :src="item.url" type="video/webm" />
@@ -395,10 +395,25 @@ function onVideoLoaded(event: Event) {
     video.style.display = 'block'
     video.style.width = '100%'
     video.style.height = 'auto'
+    video.style.minHeight = '200px'
+    video.style.backgroundColor = '#000'
+    video.style.borderRadius = '4px'
     
-    // 手機端自動播放設置
-    video.muted = true
+    // 手機端播放設置
     video.playsInline = true
+    video.muted = false // 允許聲音
+    
+    // 手機端自動播放嘗試
+    try {
+      video.play().catch(error => {
+        console.log('[MasonryGrid] Auto-play failed, user interaction required:', error)
+        // 顯示播放按鈕
+        showPlayButton(video)
+      })
+    } catch (error) {
+      console.log('[MasonryGrid] Auto-play not supported:', error)
+      showPlayButton(video)
+    }
   }
   
   // 觸發動畫
@@ -445,12 +460,27 @@ function onVideoCanPlay(event: Event) {
     // 確保影片可見
     video.style.opacity = '1'
     video.style.visibility = 'visible'
+    
+    // 移除播放按鈕
+    const playButton = video.querySelector('.mobile-play-button')
+    if (playButton) {
+      playButton.remove()
+    }
   }
 }
 
 function onVideoLoadStart(event: Event) {
   const video = event.target as HTMLVideoElement
   console.log('[MasonryGrid] Video load start:', video.src)
+}
+
+function onVideoClick(event: MouseEvent) {
+  const video = event.currentTarget as HTMLVideoElement;
+  if (video.paused) {
+    video.play();
+  } else {
+    video.pause();
+  }
 }
 
 // 影片/360 掛載後觸發動畫
@@ -515,9 +545,9 @@ onMounted(async () => {
     videos.forEach((video) => {
       const videoElement = video as HTMLVideoElement
       // 確保手機端影片設置
-      videoElement.muted = true
       videoElement.playsInline = true
       videoElement.preload = 'metadata'
+      videoElement.muted = false // 允許聲音
       
       // 強制設置樣式
       videoElement.style.display = 'block'
@@ -530,10 +560,25 @@ onMounted(async () => {
       videoElement.style.transform = 'none'
       videoElement.style.transition = 'none'
       
+      // 確保控制列可見
+      videoElement.controls = true
+      
       // 強制重新載入
       if (videoElement.src) {
         videoElement.load()
       }
+      
+      // 添加點擊事件
+      videoElement.addEventListener('click', () => {
+        if (videoElement.paused) {
+          videoElement.play().catch(error => {
+            console.log('[MasonryGrid] Manual play failed:', error)
+            showPlayButton(videoElement)
+          })
+        } else {
+          videoElement.pause()
+        }
+      })
     })
     
     // 手機端 VIEW360 初始化
@@ -695,6 +740,38 @@ function toggleFullscreen(viewerId: string) {
 if (process.client) {
   (window as any).toggleFullscreen = toggleFullscreen;
 }
+
+// 顯示手機端播放按鈕
+function showPlayButton(video: HTMLVideoElement) {
+  if (window.innerWidth < 768) {
+    const playButton = document.createElement('div')
+    playButton.className = 'mobile-play-button'
+    playButton.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 10;
+    `
+    playButton.innerHTML = '▶'
+    playButton.onclick = () => {
+      video.play()
+      playButton.remove()
+    }
+    video.parentElement?.appendChild(playButton)
+  }
+}
 </script>
 
 <style scoped>
@@ -812,6 +889,41 @@ if (process.client) {
     position: relative;
     transform: none !important;
     transition: none !important;
+    /* 確保控制列樣式 */
+    -webkit-media-controls-panel: auto !important;
+    -webkit-media-controls-play-button: auto !important;
+    -webkit-media-controls-timeline: auto !important;
+    -webkit-media-controls-current-time-display: auto !important;
+    -webkit-media-controls-time-remaining-display: auto !important;
+    -webkit-media-controls-mute-button: auto !important;
+    -webkit-media-controls-volume-slider: auto !important;
+    -webkit-media-controls-fullscreen-button: auto !important;
+  }
+  
+  /* 手機端影片播放按鈕 */
+  .masonry-item .mobile-play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+  }
+  
+  .masonry-item .mobile-play-button:hover {
+    background: rgba(0,0,0,0.9);
+    transform: translate(-50%, -50%) scale(1.1);
   }
   
   /* 手機端 VIEW360 容器優化 */
