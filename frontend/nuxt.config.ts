@@ -17,6 +17,14 @@ export default defineNuxtConfig({
       crawlLinks: false,
       routes: ['/', '/admin/login', '/manifest.json'],
       ignore: ['/admin/dashboard', '/admin/media-library', '/admin/project-management', '/admin/seo-settings', '/admin/upload-media', '/admin/user-management', '/admin/change-password']
+    },
+    // Disable problematic cache features
+    storage: {
+      // Remove Redis cache configuration that might cause issues
+    },
+    // Disable experimental features that might cause cache corruption
+    experimental: {
+      wasm: false
     }
   },
 
@@ -110,18 +118,14 @@ export default defineNuxtConfig({
     },
     optimizeDeps: {
       include: ['vue', 'vue-router']
-    }
+    },
+    // Disable cache to prevent corruption
+    cacheDir: null
   },
 
   // ── 快取優化 ─────────────────────────────────────────
   nitro: {
-    storage: {
-      redis: {
-        driver: 'redis',
-        /* redis 配置 */
-      }
-    },
-    // 靜態資源快取
+    // Simplified cache configuration to prevent corruption
     routeRules: {
       '/assets/**': { 
         headers: { 
@@ -138,10 +142,6 @@ export default defineNuxtConfig({
           'cache-control': 'public, max-age=2592000' 
         } 
       },
-    },
-    // 解決中間件重複註冊問題
-    experimental: {
-      wasm: true
     }
   },
 

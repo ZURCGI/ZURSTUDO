@@ -130,6 +130,8 @@ async function loadMedia(pageNum = 1) {
   }
   
   try {
+    console.log(`[loadMedia] Loading page ${pageNum}...`)
+    
     const result = await errorHandler.withRetry(
       () => $fetch(`${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`, {
         headers: {
@@ -138,6 +140,8 @@ async function loadMedia(pageNum = 1) {
         }
       })
     )
+    
+    console.log(`[loadMedia] Successfully loaded ${result.items?.length || 0} items`)
     
     const newItems = result.items || []
     
@@ -152,8 +156,17 @@ async function loadMedia(pageNum = 1) {
     page.value = pageNum
     
   } catch (err: any) {
+    console.error('[loadMedia] Error loading media:', err)
     error.value = true
-    errorMessage.value = err.message || '載入失敗，請檢查網路連線'
+    
+    // 根據錯誤類型提供不同的錯誤訊息
+    if (err.message?.includes('Failed to fetch') || err.message?.includes('no response')) {
+      errorMessage.value = '後端服務器暫時不可用，請稍後再試'
+    } else if (err.status === 429) {
+      errorMessage.value = '請求過於頻繁，請稍後再試'
+    } else {
+      errorMessage.value = err.message || '載入失敗，請檢查網路連線'
+    }
   } finally {
     loading.value = false
     isFetching.value = false
@@ -180,7 +193,17 @@ async function retryLoad() {
 // 載入更多
 async function loadMore() {
   if (isFetching.value || !hasMore.value) return
-  await loadMedia(page.value + 1)
+  
+  try {
+    await loadMedia(page.value + 1)
+  } catch (err: any) {
+    console.error('[loadMore] Failed to load more items:', err)
+    // 如果是網路錯誤，顯示用戶友好的訊息
+    if (err.message?.includes('Failed to fetch') || err.message?.includes('no response')) {
+      error.value = true
+      errorMessage.value = '載入更多內容失敗，後端服務器暫時不可用'
+    }
+  }
 }
 
 // 處理項目掛載

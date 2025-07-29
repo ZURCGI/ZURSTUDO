@@ -57,7 +57,6 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
   const isRetrying = ref(false)
   const retryCount = ref(0)
 
-  // 簡化的錯誤分類
   const categorizeError = (error: any): ApiError => {
     // 檢查是否為網路錯誤
     if (error.message?.includes('Failed to fetch') || error.message?.includes('no response')) {
@@ -69,33 +68,83 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
       }
     }
     
+    // 檢查是否為 429 錯誤（請求過於頻繁）
+    if (error.status === 429 || error.message?.includes('429')) {
+      return {
+        message: '請求過於頻繁，請稍後再試',
+        status: 429,
+        code: 'TOO_MANY_REQUESTS',
+        timestamp: Date.now()
+      }
+    }
+
+    // 檢查是否為認證錯誤
+    if (error.status === 401) {
+      return {
+        message: '認證失敗，請重新登入',
+        status: 401,
+        code: 'UNAUTHORIZED',
+        timestamp: Date.now()
+      }
+    }
+
+    // 檢查是否為權限錯誤
+    if (error.status === 403) {
+      return {
+        message: '權限不足',
+        status: 403,
+        code: 'FORBIDDEN',
+        timestamp: Date.now()
+      }
+    }
+
+    // 檢查是否為伺服器錯誤
+    if (error.status >= 500) {
+      return {
+        message: '伺服器錯誤，請稍後再試',
+        status: error.status,
+        code: 'SERVER_ERROR',
+        timestamp: Date.now()
+      }
+    }
+
+    // 檢查是否為客戶端錯誤
+    if (error.status >= 400) {
+      return {
+        message: error.message || '請求錯誤',
+        status: error.status,
+        code: 'CLIENT_ERROR',
+        timestamp: Date.now()
+      }
+    }
+
+    // 預設錯誤
     return {
-      message: error.status ? ERROR_MESSAGES[error.status] || `HTTP ${error.status} 錯誤` : 
-              error.message || '發生未知錯誤',
-      status: error.status,
-      code: error.status ? `HTTP_${error.status}` : 'UNKNOWN_ERROR',
+      message: error.message || '未知錯誤',
+      status: error.status || 0,
+      code: 'UNKNOWN_ERROR',
       timestamp: Date.now()
     }
   }
 
-  // 簡化的重試機制
   const withRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
     let lastError: any
-
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0) {
+          console.log(`[useErrorHandler] Retry attempt ${attempt}/${maxRetries}`)
           isRetrying.value = true
           retryCount.value = attempt
-          await new Promise(resolve => setTimeout(resolve, retryDelay * attempt))
+          
+          // 對於 429 錯誤，使用更長的延遲
+          const delay = lastError?.status === 429 ? retryDelay * 2 : retryDelay
+          await new Promise(resolve => setTimeout(resolve, delay))
         }
         
-        const result = await fn()
-        isRetrying.value = false
-        retryCount.value = 0
-        return result
+        return await fn()
       } catch (error: any) {
         lastError = error
+        console.error(`[useErrorHandler] Attempt ${attempt + 1} failed:`, error)
         
         // 如果是網路錯誤，立即停止重試
         if (error.message?.includes('Failed to fetch') || error.message?.includes('no response')) {
@@ -106,6 +155,25 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
           throw new Error(apiError.message)
         }
         
+        // 如果是 429 錯誤，使用更長的延遲
+        if (error.status === 429 || error.message?.includes('429')) {
+          console.log('[useErrorHandler] Rate limited, using longer delay')
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay * 3))
+            continue
+          }
+        }
+        
+        // 如果是認證錯誤，立即停止重試
+        if (error.status === 401) {
+          const apiError = categorizeError(error)
+          errors.value.push(apiError)
+          isRetrying.value = false
+          retryCount.value = 0
+          throw new Error(apiError.message)
+        }
+        
+        // 最後一次嘗試失敗
         if (attempt === maxRetries) {
           const apiError = categorizeError(error)
           errors.value.push(apiError)
@@ -115,23 +183,21 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
         }
       }
     }
-    
     throw lastError
   }
 
-  const clearErrors = () => errors.value = []
-  const getLatestError = () => errors.value[errors.value.length - 1] || null
-  const hasErrors = () => errors.value.length > 0
+  const clearErrors = () => {
+    errors.value = []
+    isRetrying.value = false
+    retryCount.value = 0
+  }
 
   return {
     errors: readonly(errors),
     isRetrying: readonly(isRetrying),
     retryCount: readonly(retryCount),
     withRetry,
-    categorizeError,
     clearErrors,
-    getLatestError,
-    hasErrors,
-    retryWithDelay
+    categorizeError
   }
 } 
