@@ -117,22 +117,6 @@
           >
             載入 360° 全景中...
           </div>
-          
-          <!-- 手機端控制提示 -->
-          <div 
-            v-if="isMobile"
-            :id="`mobile-controls-${item.publicId}`"
-            style="position: absolute; bottom: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 20px; font-size: 12px; z-index: 2;"
-          >
-            <span>👆 拖動查看</span>
-            <span>👌 雙指縮放</span>
-            <button 
-              :onclick="`toggleFullscreen('${item.publicId}')`"
-              style="background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px;"
-            >
-              全螢幕
-            </button>
-          </div>
         </div>
 
         <!-- 懸浮說明（可選，若要完全無提示可移除） -->
@@ -245,7 +229,7 @@ watch(
             viewerMap.set(i.publicId, new Viewer({
               container: el,
               panorama: i.url,
-              navbar: ['zoom', 'fullscreen'],
+              navbar: isMobileDevice ? [] : ['zoom', 'fullscreen'],
               defaultZoomLvl: 0,
               defaultYaw: 2.0,   // 右側（約114.6度）
               defaultPitch: 0.0,  // 水平
