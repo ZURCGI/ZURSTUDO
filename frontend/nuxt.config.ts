@@ -14,10 +14,8 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     prerender: {
-      crawlLinks: true,
-      ignore: [
-        '/admin/**'
-      ]
+      crawlLinks: false,
+      routes: []
     },
     static: {
       // 確保靜態檔案正確處理
