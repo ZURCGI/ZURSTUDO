@@ -16,18 +16,30 @@ export const useAuth = () => {
 
   const isLoggedIn = () => !!token.value
 
-  // 初始化用戶資訊
+  // 初始化用戶資訊 - 添加更好的錯誤處理
   const initUser = async () => {
     // 只有在有 token 時才調用 API
     if (token.value && token.value.trim() !== '') {
       try {
+        console.log('[useAuth] Attempting to init user with token');
         const userData = await $fetch<{ username: string; isAdmin: boolean; role?: string }>('/auth/me', {
           baseURL: config.public.apiBase,
           credentials: 'include',
+          // 添加超時和錯誤處理
+          onResponseError: (error) => {
+            if (error.response?.status === 401) {
+              console.log('[useAuth] 401 error during initUser, clearing token');
+              token.value = ''
+              user.value = null
+              return
+            }
+            throw error
+          }
         })
         user.value = userData
+        console.log('[useAuth] User initialized successfully');
       } catch (err: unknown) {
-        console.error('Failed to init user:', err)
+        console.error('[useAuth] Failed to init user:', err)
         // 如果 API 調用失敗，清除無效的 token
         token.value = ''
         user.value = null
@@ -35,12 +47,14 @@ export const useAuth = () => {
     } else {
       // 沒有 token 時，確保用戶狀態為 null
       user.value = null
+      console.log('[useAuth] No token found, user set to null');
     }
   }
 
   // 2. 使用 $fetch 并加 credentials
   const login = async (username: string, password: string) => {
     try {
+      console.log('[useAuth] Attempting login for user:', username);
       const result = await $fetch<{ access_token: string }>('/auth/login', {
         baseURL: config.public.apiBase,
         method: 'POST',
@@ -49,6 +63,7 @@ export const useAuth = () => {
 
       if (result.access_token) {
         token.value = result.access_token;
+        console.log('[useAuth] Login successful, token saved');
         await initUser(); // Set user state after getting token
       } else {
         throw new Error('Missing access token in login response');
