@@ -495,8 +495,8 @@ function onCardClick(e) {
     }
     
     const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
-    if (item && (item.type === 'video' || item.type === 'view360')) {
-      // 影片和 VIEW360 在手機端不跳轉，只顯示點擊效果
+    if (item && item.type === 'video') {
+      // 只有影片在手機端不跳轉，只顯示點擊效果
       e.preventDefault()
       e.stopPropagation()
       
@@ -509,6 +509,7 @@ function onCardClick(e) {
       
       return
     }
+    // View360 在手機端允許跳轉到詳細頁面
   }
   
   clickedThumbnailState.value = e.currentTarget
