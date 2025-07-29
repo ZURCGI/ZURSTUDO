@@ -549,6 +549,12 @@ const clickedThumbnailState = useState('clickedThumbnail')
 function onCardClick(e) {
   // 手機端特殊處理
   if (isMobile.value) {
+    // 添加安全檢查
+    if (!items.value || !e.currentTarget || !e.currentTarget.dataset || !e.currentTarget.dataset.id) {
+      console.warn('[MasonryGrid] Mobile click: missing required data')
+      return
+    }
+    
     const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
     if (item && (item.type === 'video' || item.type === 'view360')) {
       // 影片和 VIEW360 在手機端不跳轉，只顯示點擊效果
@@ -582,70 +588,79 @@ onMounted(async () => {
     grid.style.perspective = '2000px'
   }
   
-  // 手機端影片初始化
+  // 手機端初始化 - 簡化版本
   if (isMobile.value) {
-    const videos = document.querySelectorAll('.masonry-item video')
-    videos.forEach((video) => {
-      const videoElement = video as HTMLVideoElement
-      // 確保手機端影片設置
-      videoElement.playsInline = true
-      videoElement.preload = 'metadata'
-      videoElement.muted = false // 允許聲音
-      
-      // 強制設置樣式
-      videoElement.style.display = 'block'
-      videoElement.style.width = '100%'
-      videoElement.style.height = 'auto'
-      videoElement.style.minHeight = '200px'
-      videoElement.style.backgroundColor = '#000'
-      videoElement.style.borderRadius = '4px'
-      videoElement.style.position = 'relative'
-      videoElement.style.transform = 'none'
-      videoElement.style.transition = 'none'
-      
-      // 確保控制列可見
-      videoElement.controls = true
-      
-      // 強制重新載入
-      if (videoElement.src) {
-        videoElement.load()
+    try {
+      // 手機端影片初始化 - 只在桌面端執行
+      if (!isMobile.value) {
+        const videos = document.querySelectorAll('.masonry-item video')
+        videos.forEach((video) => {
+          const videoElement = video as HTMLVideoElement
+          // 確保手機端影片設置
+          videoElement.playsInline = true
+          videoElement.preload = 'metadata'
+          videoElement.muted = false // 允許聲音
+          
+          // 強制設置樣式
+          videoElement.style.display = 'block'
+          videoElement.style.width = '100%'
+          videoElement.style.height = 'auto'
+          videoElement.style.minHeight = '200px'
+          videoElement.style.backgroundColor = '#000'
+          videoElement.style.borderRadius = '4px'
+          videoElement.style.position = 'relative'
+          videoElement.style.transform = 'none'
+          videoElement.style.transition = 'none'
+          
+          // 確保控制列可見
+          videoElement.controls = true
+          
+          // 強制重新載入
+          if (videoElement.src) {
+            videoElement.load()
+          }
+          
+          // 添加點擊事件
+          videoElement.addEventListener('click', () => {
+            if (videoElement.paused) {
+              videoElement.play().catch(error => {
+                console.log('[MasonryGrid] Manual play failed:', error)
+                showPlayButton(videoElement)
+              })
+            } else {
+              videoElement.pause()
+            }
+          })
+          
+          // 確保播放按鈕顯示
+          setTimeout(() => {
+            if (videoElement.paused) {
+              showPlayButton(videoElement)
+            }
+          }, 100)
+        })
       }
       
-      // 添加點擊事件
-      videoElement.addEventListener('click', () => {
-        if (videoElement.paused) {
-          videoElement.play().catch(error => {
-            console.log('[MasonryGrid] Manual play failed:', error)
-            showPlayButton(videoElement)
-          })
-        } else {
-          videoElement.pause()
-        }
-      })
-      
-      // 確保播放按鈕顯示
-      setTimeout(() => {
-        if (videoElement.paused) {
-          showPlayButton(videoElement)
-        }
-      }, 100)
-    })
-    
-    // 手機端 VIEW360 初始化
-    const view360Containers = document.querySelectorAll('.masonry-item div[role="img"]')
-    view360Containers.forEach((container) => {
-      const containerEl = container as HTMLElement
-      // 確保容器穩定
-      containerEl.style.position = 'relative'
-      containerEl.style.overflow = 'hidden'
-      containerEl.style.width = '100%'
-      containerEl.style.height = 'auto'
-      containerEl.style.minHeight = '200px'
-      containerEl.style.backgroundColor = '#000'
-      containerEl.style.borderRadius = '4px'
-      containerEl.style.transform = 'none'
-      containerEl.style.transition = 'none'
-    })
+      // 手機端 VIEW360 初始化 - 只在桌面端執行
+      if (!isMobile.value) {
+        const view360Containers = document.querySelectorAll('.masonry-item div[role="img"]')
+        view360Containers.forEach((container) => {
+          const containerEl = container as HTMLElement
+          // 確保容器穩定
+          containerEl.style.position = 'relative'
+          containerEl.style.overflow = 'hidden'
+          containerEl.style.width = '100%'
+          containerEl.style.height = 'auto'
+          containerEl.style.minHeight = '200px'
+          containerEl.style.backgroundColor = '#000'
+          containerEl.style.borderRadius = '4px'
+          containerEl.style.transform = 'none'
+          containerEl.style.transition = 'none'
+        })
+      }
+    } catch (error) {
+      console.error('[MasonryGrid] Mobile initialization error:', error)
+    }
   }
   
   // 嚴格過濾 HTMLElement，並加上除錯 log
@@ -775,13 +790,13 @@ function onView360TouchEnd(event: TouchEvent) {
 // 手機端 VIEW360 全螢幕切換
 function toggleFullscreen(viewerId: string) {
   if (isMobile.value) {
-    const viewer = viewerMap.get(viewerId);
-    if (viewer) {
-      try {
+    try {
+      const viewer = viewerMap.get(viewerId);
+      if (viewer) {
         viewer.toggleFullscreen();
-      } catch (error) {
-        console.error('Failed to toggle fullscreen:', error);
       }
+    } catch (error) {
+      console.error('Failed to toggle fullscreen:', error);
     }
   }
 }
@@ -794,44 +809,54 @@ if (process.client) {
 // 顯示手機端播放按鈕
 function showPlayButton(video: HTMLVideoElement) {
   if (isMobile.value) {
-    const playButton = document.createElement('div')
-    playButton.className = 'mobile-play-button'
-    playButton.style.cssText = `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.8);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 80px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
-    `
-    playButton.innerHTML = '▶'
-    playButton.onclick = () => {
-      video.play()
-      playButton.remove()
+    try {
+      const playButton = document.createElement('div')
+      playButton.className = 'mobile-play-button'
+      playButton.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+      `
+      playButton.innerHTML = '▶'
+      playButton.onclick = () => {
+        try {
+          video.play()
+          playButton.remove()
+        } catch (error) {
+          console.error('[MasonryGrid] Video play failed:', error)
+        }
+      }
+      
+      // 添加觸控反饋
+      playButton.addEventListener('touchstart', () => {
+        playButton.style.transform = 'translate(-50%, -50%) scale(0.95)'
+      })
+      
+      playButton.addEventListener('touchend', () => {
+        playButton.style.transform = 'translate(-50%, -50%) scale(1)'
+      })
+      
+      if (video.parentElement) {
+        video.parentElement.appendChild(playButton)
+      }
+    } catch (error) {
+      console.error('[MasonryGrid] Show play button failed:', error)
     }
-    
-    // 添加觸控反饋
-    playButton.addEventListener('touchstart', () => {
-      playButton.style.transform = 'translate(-50%, -50%) scale(0.95)'
-    })
-    
-    playButton.addEventListener('touchend', () => {
-      playButton.style.transform = 'translate(-50%, -50%) scale(1)'
-    })
-    
-    video.parentElement?.appendChild(playButton)
   }
 }
 
