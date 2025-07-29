@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import * as cloudinary from 'cloudinary';
 import { Readable } from 'stream';
 
 export interface CloudinaryResource {
@@ -14,7 +14,9 @@ export interface CloudinaryResource {
 export interface CloudinaryApiResponse {
   resources: CloudinaryResource[];
   next_cursor?: string;
-  [key: string]: any;
+  rate_limit_allowed: number;
+  rate_limit_reset_at: string;
+  rate_limit_remaining: number;
 }
 
 export interface CloudinaryTagsResponse {
@@ -47,11 +49,6 @@ export class CloudinaryService {
     });
   }
 
-  // 取得已設定的 cloudinary 實例
-  getCloudinaryInstance() {
-    return cloudinary;
-  }
-
   /**
    * 串流上傳到 Cloudinary (避免記憶體溢位)
    */
@@ -60,7 +57,7 @@ export class CloudinaryService {
     folder = 'media',
     resourceType: 'image' | 'video' = 'image',
     publicId?: string,
-  ): Promise<UploadApiResponse> {
+  ): Promise<any> {
     this.logger.log(
       `uploadStream called, folder: ${folder}, type: ${resourceType}`,
     );
@@ -87,7 +84,7 @@ export class CloudinaryService {
   /**
    * 上傳 Buffer 到 Cloudinary (image) - 保留作為備用
    */
-  uploadBuffer(buffer: Buffer, folder = 'media'): Promise<UploadApiResponse> {
+  uploadBuffer(buffer: Buffer, folder = 'media'): Promise<any> {
     this.logger.log(
       `uploadBuffer called, folder: ${folder}, buffer size: ${buffer.length}`,
     );
@@ -118,7 +115,7 @@ export class CloudinaryService {
     buffer: Buffer,
     folder = 'media',
     publicId?: string,
-  ): Promise<UploadApiResponse> {
+  ): Promise<any> {
     this.logger.log(
       `uploadVideoBuffer called, folder: ${folder}, buffer size: ${buffer.length}`,
     );
@@ -165,55 +162,47 @@ export class CloudinaryService {
   }
 
   /**
-   * 從 Cloudinary 讀取所有檔案
+   * 刪除 Cloudinary 資源
    */
-  async listAllFromCloudinary(folder?: string): Promise<CloudinaryResource[]> {
-    this.logger.log(`listAllFromCloudinary called, folder: ${folder || 'all'}`);
-
-    let nextCursor: string | undefined = undefined;
-    const all: CloudinaryResource[] = [];
-
-    try {
-      do {
-        const params: {
-          resource_type: string;
-          max_results: number;
-          next_cursor?: string;
-          prefix?: string;
-        } = {
-          resource_type: 'auto',
-          max_results: 100,
-        };
-
-        if (nextCursor) {
-          params.next_cursor = nextCursor;
+  async deleteResource(publicId: string, resourceType: 'image' | 'video' = 'image'): Promise<any> {
+    this.logger.log(`deleteResource called, publicId: ${publicId}, type: ${resourceType}`);
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.destroy(publicId, { resource_type: resourceType }, (error, result) => {
+        if (error) {
+          this.logger.error(`deleteResource failed: ${error.message}`);
+          return reject(new BadRequestException(error.message));
         }
+        this.logger.log(`deleteResource success: ${publicId}`);
+        resolve(result);
+      });
+    });
+  }
 
-        if (folder) {
-          params.prefix = folder;
+  /**
+   * 取得 Cloudinary 資源列表
+   */
+  async getResources(folder: string, maxResults = 50, nextCursor?: string): Promise<CloudinaryApiResponse> {
+    this.logger.log(`getResources called, folder: ${folder}, maxResults: ${maxResults}`);
+    return new Promise((resolve, reject) => {
+      const options: any = {
+        type: 'upload',
+        prefix: folder,
+        max_results: maxResults,
+      };
+      
+      if (nextCursor) {
+        options.next_cursor = nextCursor;
+      }
+
+      cloudinary.api.resources(options, (error, result) => {
+        if (error) {
+          this.logger.error(`getResources failed: ${error.message}`);
+          return reject(new BadRequestException(error.message));
         }
-
-        const res = (await cloudinary.api.resources(
-          params,
-        )) as CloudinaryApiResponse;
-        this.logger.log(
-          `listAllFromCloudinary batch: ${res.resources.length} items, next_cursor: ${res.next_cursor || 'none'}`,
-        );
-
-        all.push(...res.resources);
-        nextCursor = res.next_cursor;
-      } while (nextCursor);
-
-      this.logger.log(`listAllFromCloudinary total: ${all.length} items`);
-      return all;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`listAllFromCloudinary failed: ${errorMessage}`);
-      throw new BadRequestException(
-        `Failed to list Cloudinary resources: ${errorMessage}`,
-      );
-    }
+        this.logger.log(`getResources success: ${result.resources?.length || 0} resources`);
+        resolve(result);
+      });
+    });
   }
 
   /**

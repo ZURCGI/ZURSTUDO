@@ -52,7 +52,7 @@ const createCloudinaryStorage = (
 ) => {
   const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-  const cloudinary = require('cloudinary').v2;
+  const cloudinary = require('cloudinary');
 
   // 確保 cloudinary 有正確配置
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -70,8 +70,12 @@ const createCloudinaryStorage = (
       resource_type: resourceType,
       transformation:
         resourceType === 'image'
-          ? [{ width: 1920, height: 1080, crop: 'limit' }]
-          : [],
+          ? [
+              { width: 1920, height: 1080, crop: 'limit' },
+              { quality: 'auto' },
+              { fetch_format: 'auto' },
+            ]
+          : undefined,
     },
   });
 };
