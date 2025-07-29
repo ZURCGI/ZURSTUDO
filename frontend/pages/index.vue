@@ -34,7 +34,11 @@
       <div class="error-container">
         <Icon name="heroicons:exclamation-triangle" class="w-16 h-16 text-red-500 mx-auto mb-4" />
         <h2 class="text-xl font-semibold text-gray-900 mb-4">載入失敗</h2>
-        <p class="text-gray-600 mb-4">{{ errorMessage }}</p>
+        <p class="text-gray-600 mb-4">
+          {{ errorMessage.includes('Failed to fetch') || errorMessage.includes('no response') 
+            ? '後端服務器暫時不可用，請稍後再試。' 
+            : errorMessage }}
+        </p>
         
         <div class="flex flex-col sm:flex-row gap-3 justify-center">
           <button 
@@ -52,6 +56,14 @@
           >
             重新載入媒體
           </button>
+        </div>
+        
+        <!-- 後端狀態提示 -->
+        <div v-if="errorMessage.includes('Failed to fetch') || errorMessage.includes('no response')" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p class="text-sm text-yellow-800">
+            <Icon name="heroicons:information-circle" class="w-4 h-4 inline mr-1" />
+            後端服務器可能正在重新啟動，請等待幾分鐘後再試。
+          </p>
         </div>
       </div>
     </div>

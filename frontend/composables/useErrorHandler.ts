@@ -52,19 +52,31 @@ export const retryWithDelay = async <T>(
 }
 
 export const useErrorHandler = (options: ErrorOptions = {}) => {
-  const { maxRetries = 3, retryDelay = 1000 } = options
+  const { maxRetries = 1, retryDelay = 2000 } = options // 減少重試次數，增加延遲
   const errors = ref<ApiError[]>([])
   const isRetrying = ref(false)
   const retryCount = ref(0)
 
   // 簡化的錯誤分類
-  const categorizeError = (error: any): ApiError => ({
-    message: error.status ? ERROR_MESSAGES[error.status] || `HTTP ${error.status} 錯誤` : 
-            error.message || '發生未知錯誤',
-    status: error.status,
-    code: error.status ? `HTTP_${error.status}` : 'UNKNOWN_ERROR',
-    timestamp: Date.now()
-  })
+  const categorizeError = (error: any): ApiError => {
+    // 檢查是否為網路錯誤
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('no response')) {
+      return {
+        message: '後端服務器暫時不可用，請稍後再試',
+        status: 503,
+        code: 'BACKEND_UNAVAILABLE',
+        timestamp: Date.now()
+      }
+    }
+    
+    return {
+      message: error.status ? ERROR_MESSAGES[error.status] || `HTTP ${error.status} 錯誤` : 
+              error.message || '發生未知錯誤',
+      status: error.status,
+      code: error.status ? `HTTP_${error.status}` : 'UNKNOWN_ERROR',
+      timestamp: Date.now()
+    }
+  }
 
   // 簡化的重試機制
   const withRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
@@ -84,6 +96,16 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
         return result
       } catch (error: any) {
         lastError = error
+        
+        // 如果是網路錯誤，立即停止重試
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('no response')) {
+          const apiError = categorizeError(error)
+          errors.value.push(apiError)
+          isRetrying.value = false
+          retryCount.value = 0
+          throw new Error(apiError.message)
+        }
+        
         if (attempt === maxRetries) {
           const apiError = categorizeError(error)
           errors.value.push(apiError)
