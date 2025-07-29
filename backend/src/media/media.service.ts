@@ -226,7 +226,8 @@ export class MediaService {
           return {
             ...videoData,
             type: 'video' as const,
-            publicId: img.publicId.replace('zur_images/', '')
+            // 保持完整的 publicId 格式，不移除前綴
+            publicId: img.publicId
           };
         }
         return { ...img, type: 'image' as const };

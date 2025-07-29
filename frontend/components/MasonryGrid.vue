@@ -559,9 +559,13 @@ function onCardClick(e) {
 onMounted(async () => {
   if (!columnsProp) {
     updateColumns()
-  window.addEventListener('resize', updateColumns)
+    window.addEventListener('resize', updateColumns)
   }
   setupScrollAnimation()
+  
+  // 啟用無限滾動
+  observeSentinel()
+  
   await nextTick()
   // 3D 畫廊效果
   const grid = document.querySelector('.masonry-item')?.parentElement
