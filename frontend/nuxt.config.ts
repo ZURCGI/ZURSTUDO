@@ -15,7 +15,6 @@ export default defineNuxtConfig({
     preset: 'static',
     prerender: {
       crawlLinks: true,
-      routes: ['/manifest.json'],
       ignore: [
         '/admin/**'
       ]
@@ -203,13 +202,6 @@ export default defineNuxtConfig({
 
   // ── 中間件配置 ───────────────────────────────────────
   routeRules: {
-    '/manifest.json': { 
-      prerender: true,
-      headers: { 
-        'cache-control': 'public, max-age=86400',
-        'content-type': 'application/json'
-      } 
-    },
     '/.well-known/appspecific/com.chrome.devtools.json': {
       statusCode: 200,
       body: '{}',
