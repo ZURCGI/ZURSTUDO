@@ -41,32 +41,6 @@
                 <span class="text-sm">載入 360° 全景中...</span>
               </div>
             </div>
-            
-            <!-- 自定義控制列覆蓋層 -->
-            <div v-if="viewerInstance" class="view360-controls">
-              <button 
-                @click="resetView"
-                class="view360-controls-btn"
-                title="重置視角"
-              >
-                <Icon name="heroicons:arrow-path" class="w-4 h-4" />
-              </button>
-              <button 
-                @click="toggleAutoRotate"
-                :class="['view360-controls-btn', autoRotate ? 'bg-white/30' : '']"
-                :title="autoRotate ? '停止自動旋轉' : '開始自動旋轉'"
-              >
-                <Icon name="heroicons:arrow-path-rounded-square" class="w-4 h-4" />
-              </button>
-              <div class="w-px h-6 bg-white/30"></div>
-              <button 
-                @click="toggleFullscreen"
-                class="view360-controls-btn"
-                title="全螢幕"
-              >
-                <Icon name="heroicons:arrows-pointing-out" class="w-4 h-4" />
-              </button>
-            </div>
           </div>
           <!-- 圖片 -->
           <div v-else-if="media.type === 'image'" class="relative w-fit mx-auto">
@@ -478,53 +452,6 @@ function onTouchEnd(e: TouchEvent) {
 
 <style scoped>
 a { text-decoration: none; color: inherit; }
-
-/* View360 控制列樣式 */
-.view360-controls {
-  position: absolute;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  color: white;
-  z-index: 10;
-}
-
-.view360-controls button {
-  padding: 0.5rem;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-  min-width: 32px;
-  min-height: 32px;
-}
-
-.view360-controls button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
-.view360-controls button:active {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-/* 手機端適配 */
-@media (max-width: 768px) {
-  .view360-controls {
-    bottom: 0.5rem;
-    padding: 0.25rem 0.75rem;
-  }
-  
-  .view360-controls button {
-    padding: 0.25rem;
-    min-width: 28px;
-    min-height: 28px;
-  }
-}
 
 /* 載入動畫 */
 .view360-loading {
