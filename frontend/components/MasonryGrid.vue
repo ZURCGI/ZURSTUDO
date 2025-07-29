@@ -521,25 +521,6 @@ onBeforeUpdate(() => {
 const clickedThumbnailState = useState('clickedThumbnail')
 
 function onCardClick(e) {
-  // 手機端特殊處理
-  if (isMobile.value) {
-    const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
-    if (item && item.type === 'image') {
-      // 圖片在手機端不跳轉，只顯示點擊效果
-      e.preventDefault()
-      e.stopPropagation()
-      
-      // 可以添加一些視覺反饋
-      const card = e.currentTarget
-      card.style.transform = 'scale(0.98)'
-      setTimeout(() => {
-        card.style.transform = 'scale(1)'
-      }, 150)
-      
-      return
-    }
-  }
-  
   clickedThumbnailState.value = e.currentTarget
 }
 
@@ -810,16 +791,7 @@ function showPlayButton(video: HTMLVideoElement) {
 }
 
 function getItemLink(item: { type: string; url: string; publicId: string; description?: string }) {
-  // 手機端：只有影片和 VIEW360 跳轉到詳細頁
-  if (isMobile.value) {
-    if (item.type === 'video' || item.type === 'view360') {
-      return `/archive/${item.publicId}`
-    }
-    // 圖片在手機端不跳轉
-    return '#'
-  }
-  
-  // 桌面端：所有項目都跳轉到詳細頁
+  // 所有項目都跳轉到詳細頁
   return `/archive/${item.publicId}`
 }
 </script>
