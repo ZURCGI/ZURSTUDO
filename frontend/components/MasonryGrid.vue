@@ -46,7 +46,7 @@
 
         <!-- 視頻 - 手機端隱藏 -->
         <video
-          v-else-if="item.type === 'video' && !isMobile"
+          v-else-if="item.type === 'video'"
           :ref="(el) => setCardRefs(el)"
           controls 
           preload="metadata"
@@ -86,7 +86,7 @@
 
         <!-- 360° 全景 - 手機端隱藏 -->
         <div
-          v-else-if="item.type === 'view360' && !isMobile"
+          v-else-if="item.type === 'view360'"
           :ref="(el) => setCardRefs(el)"
           :id="`viewer-${item.publicId}`"
           class="w-full overflow-hidden shadow"
@@ -132,32 +132,6 @@
             >
               全螢幕
             </button>
-          </div>
-        </div>
-
-        <!-- 手機端影片提示 -->
-        <div
-          v-else-if="item.type === 'video' && isMobile"
-          class="w-full bg-gray-100 rounded-lg shadow flex items-center justify-center"
-          style="aspect-ratio: 16/9; min-height: 200px;"
-        >
-          <div class="text-center text-gray-500">
-            <div class="text-4xl mb-2">🎬</div>
-            <div class="text-sm">影片內容</div>
-            <div class="text-xs mt-1">請使用桌面版查看</div>
-          </div>
-        </div>
-
-        <!-- 手機端 VIEW360 提示 -->
-        <div
-          v-else-if="item.type === 'view360' && isMobile"
-          class="w-full bg-gray-100 rounded-lg shadow flex items-center justify-center"
-          style="aspect-ratio: 16/9; min-height: 200px;"
-        >
-          <div class="text-center text-gray-500">
-            <div class="text-4xl mb-2">🌐</div>
-            <div class="text-sm">360° 全景</div>
-            <div class="text-xs mt-1">請使用桌面版查看</div>
           </div>
         </div>
 
