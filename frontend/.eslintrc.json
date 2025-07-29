@@ -1,0 +1,20 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "plugin:vue/vue3-recommended"
+  ],
+  "plugins": [
+    "vuejs-accessibility"
+  ],
+  "rules": {
+    "vuejs-accessibility/alt-text": "warn",
+    "vuejs-accessibility/anchor-has-content": "warn",
+    "vuejs-accessibility/interactive-supports-focus": "warn",
+    "vuejs-accessibility/click-events-have-key-events": "warn"
+  }
+} 

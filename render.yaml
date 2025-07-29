@@ -1,0 +1,52 @@
+# render.yaml - ZUR Project Blueprint
+# Deploys a NestJS backend, a Nuxt.js frontend, and a PostgreSQL database.
+
+services:
+  # 1. 後端 NestJS 服務
+  - type: web
+    name: zur-backend
+    env: node
+    rootDir: backend
+    plan: free # 您可以根據需求選擇 'starter' 或更高方案
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health # 建議在後端新增一個 /api/health 端點
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zur-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true # Render 會自動產生一個安全的隨機字串
+      - key: PORT
+        value: 10000
+      # --- 請在 Render 儀表板上手動新增以下環境變數 ---
+      # - key: CLOUDINARY_URL
+      #   value: "cloudinary://api_key:api_secret@cloud_name"
+      # - key: REDIS_URL # 如果您使用 Redis
+      #   value: "redis://user:password@host:port"
+
+  # 2. 前端 Nuxt.js 服務
+  - type: web
+    name: zur-frontend
+    env: node
+    rootDir: frontend
+    plan: free # 您可以根據需求選擇 'starter' 或更高方案
+    buildCommand: npm install && npm run build
+    startCommand: node .output/server/index.mjs
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NUXT_PUBLIC_API_BASE
+        fromService:
+          type: web
+          name: zur-backend
+          property: url
+
+  # 3. PostgreSQL 資料庫服務
+  - type: psql
+    name: zur-db
+    plan: free # 您可以根據需求選擇 'starter' 或更高方案
+    ipAllowList: [] # 允許所有 Render 服務連線，若要更安全請填入服務的 IP

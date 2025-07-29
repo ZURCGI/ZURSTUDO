@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+/* 全站英文自動大寫，中文不受影響 */
+html, body, #__nuxt, #app {
+  font-family: 'Noto Sans TC', 'Noto Sans', 'PingFang TC', 'Microsoft JhengHei', 'Heiti TC', 'sans-serif';
+}
+
+/* 只針對英文自動大寫，中文不受影響 */
+:lang(en), .en, .en-US {
+  text-transform: uppercase !important;
+}
+
+/* 若需排除中文自動大寫，可針對 zh 類型元素覆蓋 text-transform:none; */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* 之後若要加自訂樣式，也放在這裡 */
+
+/* 全域 focus-visible 無障礙樣式 */
+:focus-visible {
+  outline: 2px solid #1A56DB;
+  outline-offset: 2px;
+  transition: outline 0.2s;
+}
+
+video::-webkit-media-controls-download-button {
+  display: none !important;
+}
+
+.btn-black {
+  @apply bg-black text-white rounded transition shadow hover:bg-gray-900 active:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black;
+}
+
+/* ✅ Admin 佈局專用滾動規則 */
+html.admin-layout-active,
+body.admin-layout-active {
+  overflow: hidden !important; /* 增加 !important 以確保最高優先級 */
+  height: 100% !important;
+}
+
+/* ✅ Default 佈局專用滾動規則 */
+html.smooth-scroll-enabled,
+body.smooth-scroll-enabled {
+  /* !important 不再是必需的，但保留也無妨，作為雙重保險 */
+  height: auto;
+  overflow: visible;
+  overflow-x: hidden;
+}
