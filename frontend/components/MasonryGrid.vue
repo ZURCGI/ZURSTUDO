@@ -497,13 +497,19 @@ const clickedThumbnailState = useState('clickedThumbnail')
 function onCardClick(e) {
   // 手機端特殊處理
   if (isMobile.value) {
+    // 找到包含 data-id 的元素（可能是事件目標或其父元素）
+    let targetElement = e.currentTarget
+    while (targetElement && !targetElement.dataset?.id) {
+      targetElement = targetElement.parentElement
+    }
+    
     // 添加安全檢查
-    if (!items.value || !e.currentTarget || !e.currentTarget.dataset) {
-      console.warn('[MasonryGrid] Mobile click: missing currentTarget or dataset')
+    if (!items.value || !targetElement || !targetElement.dataset) {
+      console.warn('[MasonryGrid] Mobile click: missing target element or dataset')
       return
     }
     
-    const dataId = e.currentTarget.dataset.id
+    const dataId = targetElement.dataset.id
     if (!dataId) {
       console.warn('[MasonryGrid] Mobile click: missing data-id')
       return
@@ -521,7 +527,7 @@ function onCardClick(e) {
       e.stopPropagation()
       
       // 視覺反饋
-      const card = e.currentTarget
+      const card = targetElement
       card.style.transform = 'scale(0.98)'
       setTimeout(() => {
         card.style.transform = 'scale(1)'
@@ -716,25 +722,31 @@ function hasMore() {
 function onView360TouchStart(event: TouchEvent) {
   // 只在手機端處理
   if (isMobile.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // 標記正在操作 VIEW360
-    const target = event.currentTarget as HTMLElement;
-    target.setAttribute('data-view360-active', 'true');
+    // 只有兩指觸控才阻止事件，允許單指點擊導航
+    if (event.touches.length >= 2) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // 標記正在操作 VIEW360
+      const target = event.currentTarget as HTMLElement;
+      target.setAttribute('data-view360-active', 'true');
+    }
   }
 }
 
 function onView360TouchMove(event: TouchEvent) {
   // 只在手機端處理
   if (isMobile.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // 防止頁面滾動
-    const target = event.currentTarget as HTMLElement;
-    if (target.getAttribute('data-view360-active') === 'true') {
+    // 只有兩指觸控才阻止事件
+    if (event.touches.length >= 2) {
       event.preventDefault();
+      event.stopPropagation();
+      
+      // 防止頁面滾動
+      const target = event.currentTarget as HTMLElement;
+      if (target.getAttribute('data-view360-active') === 'true') {
+        event.preventDefault();
+      }
     }
   }
 }
@@ -742,12 +754,15 @@ function onView360TouchMove(event: TouchEvent) {
 function onView360TouchEnd(event: TouchEvent) {
   // 只在手機端處理
   if (isMobile.value) {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // 清除標記
-    const target = event.currentTarget as HTMLElement;
-    target.removeAttribute('data-view360-active');
+    // 只有兩指觸控才阻止事件
+    if (event.changedTouches.length >= 2) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // 清除標記
+      const target = event.currentTarget as HTMLElement;
+      target.removeAttribute('data-view360-active');
+    }
   }
 }
 
@@ -825,12 +840,12 @@ function showPlayButton(video: HTMLVideoElement) {
 }
 
 function getItemLink(item: { type: string; url: string; publicId: string; description?: string }) {
-  // 手機端：只有圖片跳轉到詳細頁
+  // 手機端：圖片和 View360 跳轉到詳細頁，影片不跳轉
   if (isMobile.value) {
-    if (item.type === 'image') {
+    if (item.type === 'image' || item.type === 'view360') {
       return `/archive/${item.publicId}`
     }
-    // 影片和 VIEW360 在手機端不跳轉
+    // 影片在手機端不跳轉
     return '#'
   }
   
