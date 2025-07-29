@@ -62,6 +62,14 @@ export const useAuth = () => {
         method: 'POST',
         body: { username, password },
         credentials: 'include', // 添加這行來接收 httpOnly cookie
+        // 添加更好的錯誤處理
+        onResponseError: (error) => {
+          if (error.response?.status === 401) {
+            console.log('[useAuth] 401 Unauthorized - Invalid credentials');
+            throw new Error('使用者或密碼錯誤');
+          }
+          throw error;
+        }
       });
 
       if (result.access_token) {
@@ -73,7 +81,12 @@ export const useAuth = () => {
       }
     } catch (err: unknown) {
       console.error('[useAuth] Login failed:', err);
-      throw new Error(`登入失敗：${(err as AuthError)?.message || '未知錯誤'}`);
+      // 提供更具體的錯誤訊息
+      if (err instanceof Error) {
+        throw new Error(`登入失敗：${err.message}`);
+      } else {
+        throw new Error(`登入失敗：${(err as AuthError)?.message || '未知錯誤'}`);
+      }
     }
   };
 
