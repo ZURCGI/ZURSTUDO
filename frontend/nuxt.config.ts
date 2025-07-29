@@ -12,7 +12,12 @@ export default defineNuxtConfig({
 
   // ── 靜態生成配置 ─────────────────────────────────────
   nitro: {
-    preset: 'static'
+    preset: 'static',
+    prerender: {
+      crawlLinks: false,
+      routes: [],
+      ignore: ['/**']
+    }
   },
 
   // ── SSR 配置 ─────────────────────────────────────────
