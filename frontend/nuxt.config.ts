@@ -137,6 +137,9 @@ export default defineNuxtConfig({
         },
       },
     },
+    // 靜態資源處理
+    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp'],
+    publicDir: 'public',
   },
 
   // ── 快取優化 ─────────────────────────────────────────

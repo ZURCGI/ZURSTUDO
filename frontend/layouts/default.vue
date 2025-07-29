@@ -97,7 +97,7 @@
 
 <script setup>
 import SitePreloader from '~/components/SitePreloader.vue'
-import { ref, onMounted, onBeforeUnmount, onUnmounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from '#imports'
 const router = useRouter()
 const route = useRoute()
@@ -144,25 +144,11 @@ onMounted(() => {
     startTime = Date.now()
     next()
   })
-
-  // ✅ 當 default 佈局掛載時，為 html 和 body 添加標記
-  if (process.client) {
-    document.documentElement.classList.add('smooth-scroll-enabled');
-    document.body.classList.add('smooth-scroll-enabled');
-  }
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   window.removeEventListener('beforeunload', reportDuration)
-})
-
-// ✅ 新增：當 default 佈局被銷毀時，清理標記
-onUnmounted(() => {
-  if (process.client) {
-    document.documentElement.classList.remove('smooth-scroll-enabled');
-    document.body.classList.remove('smooth-scroll-enabled');
-  }
 })
 </script>
 
