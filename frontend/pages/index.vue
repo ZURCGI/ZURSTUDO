@@ -131,16 +131,21 @@ async function loadMedia(pageNum = 1) {
     console.log('API response:', result)
     
     const newItems = result.items || []
+    console.log('Extracted items:', newItems)
+    console.log('Items length:', newItems.length)
     
     // 更新數據，這將會被上面的 watch 捕捉到
     if (pageNum === 1) {
       items.value = newItems
+      console.log('Updated items.value (page 1):', items.value)
     } else {
       items.value = [...items.value, ...newItems]
+      console.log('Updated items.value (page > 1):', items.value)
     }
     
     hasMore.value = result.pagination?.hasMore ?? (newItems.length === pageSize)
     page.value = pageNum
+    console.log('Updated hasMore:', hasMore.value, 'page:', page.value)
     
   } catch (err: any) {
     error.value = true
