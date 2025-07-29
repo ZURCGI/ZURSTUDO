@@ -521,21 +521,7 @@ function onCardClick(e) {
       return
     }
     
-    if (item.type === 'video') {
-      // 只有影片在手機端不跳轉，只顯示點擊效果
-      e.preventDefault()
-      e.stopPropagation()
-      
-      // 視覺反饋
-      const card = targetElement
-      card.style.transform = 'scale(0.98)'
-      setTimeout(() => {
-        card.style.transform = 'scale(1)'
-      }, 150)
-      
-      return
-    }
-    // View360 在手機端允許跳轉到詳細頁面
+    // 所有媒體類型在手機端都允許跳轉到詳細頁面
   }
   
   clickedThumbnailState.value = e.currentTarget
@@ -840,13 +826,9 @@ function showPlayButton(video: HTMLVideoElement) {
 }
 
 function getItemLink(item: { type: string; url: string; publicId: string; description?: string }) {
-  // 手機端：圖片和 View360 跳轉到詳細頁，影片不跳轉
+  // 手機端：所有項目都跳轉到詳細頁
   if (isMobile.value) {
-    if (item.type === 'image' || item.type === 'view360') {
-      return `/archive/${item.publicId}`
-    }
-    // 影片在手機端不跳轉
-    return '#'
+    return `/archive/${item.publicId}`
   }
   
   // 桌面端：所有項目都跳轉到詳細頁
