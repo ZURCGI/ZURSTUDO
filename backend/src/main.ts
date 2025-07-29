@@ -32,7 +32,9 @@ async function bootstrap() {
   // CORS 配置
   const frontendUrl = config.get<string>('FRONTEND_URL', 'http://localhost:5173')
   const isProd = config.get<string>('NODE_ENV') === 'production'
-  const origins = isProd ? [frontendUrl] : [frontendUrl, 'http://localhost:5173', 'http://127.0.0.1:5173']
+  const origins = isProd 
+    ? [frontendUrl, 'https://zurcgi.com', 'https://www.zurcgi.com'] 
+    : [frontendUrl, 'http://localhost:5173', 'http://127.0.0.1:5173']
   
   app.enableCors({
     origin: origins,
