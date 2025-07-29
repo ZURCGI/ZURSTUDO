@@ -22,6 +22,14 @@ export default defineNuxtPlugin(() => {
         return; // 不顯示重複中間件警告
       }
       
+      // 過濾 Cloudinary 模組外部化警告
+      if (typeof message === 'string' && 
+          message.includes('Module') && 
+          message.includes('has been externalized for browser compatibility') &&
+          message.includes('cloudinary')) {
+        return; // 不顯示 Cloudinary 外部化警告
+      }
+      
       // 顯示其他警告
       originalWarn.apply(console, args);
     };

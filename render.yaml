@@ -23,14 +23,14 @@ services:
       - key: PORT
         value: 10000
 
-  # 2. 前端 Nuxt.js 服務
+  # 2. 前端 Nuxt.js 靜態網站
   - type: web
     name: zur-frontend
-    env: node
+    env: static
     rootDir: frontend
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: node .output/server/index.mjs
+    buildCommand: npm install && npm run generate
+    staticPublishPath: .output/public
     envVars:
       - key: NODE_ENV
         value: production

@@ -12,7 +12,18 @@ export default defineNuxtConfig({
 
   // ── 靜態生成配置 ─────────────────────────────────────
   nitro: {
-    preset: 'node-server'
+    preset: 'static',
+    prerender: {
+      crawlLinks: true,
+      routes: ['/manifest.json'],
+      ignore: [
+        '/admin/**'
+      ]
+    },
+    static: {
+      // 確保靜態檔案正確處理
+      maxAge: 31536000
+    }
   },
 
   // ── SSR 配置 ─────────────────────────────────────────
@@ -193,8 +204,10 @@ export default defineNuxtConfig({
   // ── 中間件配置 ───────────────────────────────────────
   routeRules: {
     '/manifest.json': { 
+      prerender: true,
       headers: { 
-        'cache-control': 'public, max-age=86400' 
+        'cache-control': 'public, max-age=86400',
+        'content-type': 'application/json'
       } 
     },
     '/.well-known/appspecific/com.chrome.devtools.json': {
