@@ -191,37 +191,11 @@ export default defineNuxtConfig({
     }
   },
 
-  // ── 開發時配置 ───────────────────────────────────────
-  devtools: false,
-
-  // ── 中間件配置 ───────────────────────────────────────
-  routeRules: {
-    // SPA fallback for client-side routing
-    '/**': { ssr: false },
-    '/.well-known/appspecific/com.chrome.devtools.json': {
-      statusCode: 200,
-      body: '{}',
-      headers: {
-        'content-type': 'application/json',
-        'cache-control': 'public, max-age=86400'
-      }
-    },
-  },
-
-  // ── 全局 Runtime Config ─────────────────────────────────
-  runtimeConfig: {
-    public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
-      cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
-      siteUrl: 'https://zurcgi.com/',
-    },
-    // 伺服器端環境變數
-    huggingfaceApiKey: process.env.HUGGINGFACE_API_KEY,
-    geminiApiKey: process.env.GEMINI_API_KEY,
-  },
-
-  // ── 頁面 Head 設定 ─────────────────────────────────────
+  // ── 應用配置 ─────────────────────────────────────────
   app: {
+    baseURL: '/',
+    buildAssetsDir: '/_nuxt/',
+    cdnURL: '',
     head: {
       titleTemplate: '%s | ZUR STUDIO',
       htmlAttrs: { lang: 'en' },
@@ -351,6 +325,35 @@ export default defineNuxtConfig({
       ]
     }
   },
+
+  // ── 路由規則 ─────────────────────────────────────────
+  routeRules: {
+    // SPA fallback for client-side routing
+    '/**': { ssr: false },
+    '/.well-known/appspecific/com.chrome.devtools.json': {
+      statusCode: 200,
+      body: '{}',
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'public, max-age=86400'
+      }
+    },
+  },
+
+  // ── 全局 Runtime Config ─────────────────────────────────
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
+      cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+      siteUrl: 'https://zurcgi.com/',
+    },
+    // 伺服器端環境變數
+    huggingfaceApiKey: process.env.HUGGINGFACE_API_KEY,
+    geminiApiKey: process.env.GEMINI_API_KEY,
+  },
+
+  // ── 開發時配置 ───────────────────────────────────────
+  devtools: false,
 
   security: {
     headers: {
