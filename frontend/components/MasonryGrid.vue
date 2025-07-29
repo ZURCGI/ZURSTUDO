@@ -439,6 +439,15 @@ function onVideoLoadStart(event: Event) {
 
 function onVideoClick(event: MouseEvent) {
   const video = event.currentTarget as HTMLVideoElement;
+  
+  // 手機端特殊處理
+  if (isMobile.value) {
+    // 在手機端阻止事件冒泡，避免干擾 NuxtLink 點擊
+    event.stopPropagation();
+    return;
+  }
+  
+  // 桌面端正常播放/暫停
   if (video.paused) {
     video.play();
   } else {
