@@ -117,9 +117,18 @@ async function loadMedia(pageNum = 1) {
   }
   
   try {
+    console.log('Attempting to fetch from:', `${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`)
+    
     const result = await errorHandler.withRetry(
-      () => $fetch(`${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`)
+      () => $fetch(`${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
     )
+    
+    console.log('API response:', result)
     
     const newItems = result.items || []
     
