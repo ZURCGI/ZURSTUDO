@@ -43,8 +43,22 @@ export function useAppSeoMeta(options: SeoOptions) {
   onMounted(async () => {
     // 取得全站 SEO 設定
     try {
-      siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { credentials: 'include' })
+      siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
+        credentials: 'include',
+        // 添加錯誤處理，避免 401 錯誤導致重複請求
+        onResponseError: (error) => {
+          if (error.response?.status === 401) {
+            // 401 錯誤是正常的，因為未登入用戶無法訪問設置
+            console.log('[useAppSeoMeta] Settings API requires auth, using defaults');
+            siteSetting.value = {}
+            return
+          }
+          throw error
+        }
+      })
     } catch (e) {
+      // 任何錯誤都使用默認設置
+      console.log('[useAppSeoMeta] Settings API failed, using defaults:', e)
       siteSetting.value = {}
     }
     injectHead()

@@ -93,6 +93,7 @@ const hasMore = ref(true)
 const isFetching = ref(false)
 const isRetrying = ref(false)
 const gridContainer = ref<HTMLElement | null>(null)
+const animationTriggered = ref(false) // 新增：防止動畫重複觸發
 let observer: IntersectionObserver | null = null
 let ctx: gsap.Context | null = null
 let tl: gsap.core.Timeline | null = null
@@ -215,8 +216,10 @@ onBeforeUnmount(() => {
 
 // --- 核心優化：使用 watch 監聽數據，聲明式地觸發動畫 ---
 watch(items, (newItems) => {
-  // 確保只在首次載入數據 (page 1) 且有數據時觸發
-  if (newItems.length > 0 && page.value === 1) {
+  // 確保只在首次載入數據 (page 1) 且有數據時觸發，且只觸發一次
+  if (newItems.length > 0 && page.value === 1 && !animationTriggered.value) {
+    animationTriggered.value = true // 標記已觸發
+    
     // 確保 GSAP context 和時間軸已準備好
     if (!ctx || !tl) {
       console.warn('[Animation] GSAP context or timeline not ready, creating...');
