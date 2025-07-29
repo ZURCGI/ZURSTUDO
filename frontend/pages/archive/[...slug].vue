@@ -440,9 +440,9 @@ function resetView() {
 function toggleAutoRotate() {
   if (viewerInstance.value) {
     if (autoRotate.value) {
-      viewerInstance.value.stopAutorotate();
+      viewerInstance.value.stopAutoRotate();
     } else {
-      viewerInstance.value.startAutorotate();
+      viewerInstance.value.startAutoRotate();
     }
   }
 }
