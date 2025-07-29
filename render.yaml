@@ -46,7 +46,7 @@ services:
           property: url
 
   # 3. PostgreSQL 資料庫服務
-  - type: psql
+  - type: pserv
     name: zur-db
     plan: free # 您可以根據需求選擇 'starter' 或更高方案
     ipAllowList: [] # 允許所有 Render 服務連線，若要更安全請填入服務的 IP
