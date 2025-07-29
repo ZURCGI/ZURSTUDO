@@ -1,7 +1,9 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import cloudinary from 'cloudinary';
 import { Readable } from 'stream';
+
+// 使用 require 導入 cloudinary v1
+const cloudinary = require('cloudinary');
 
 export interface CloudinaryResource {
   public_id: string;

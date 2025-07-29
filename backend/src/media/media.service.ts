@@ -12,7 +12,9 @@ import {
   CloudinaryResource,
   CloudinaryApiResponse,
 } from '../upload/cloudinary.service';
-import cloudinary from 'cloudinary';
+
+// 使用 require 導入 cloudinary v1
+const cloudinary = require('cloudinary');
 
 @Injectable()
 export class MediaService {
@@ -493,7 +495,13 @@ export class MediaService {
   ) {
     this.logger.log(`batchMoveToFolder called: ${items.length} items to ${folder}`);
 
-    const results = [];
+    const results: Array<{
+      publicId: string;
+      newPublicId?: string;
+      type: 'image' | 'video' | 'view360';
+      success: boolean;
+      error?: string;
+    }> = [];
     let successCount = 0;
     let errorCount = 0;
 
@@ -575,7 +583,13 @@ export class MediaService {
   ) {
     this.logger.log(`batchTag called: ${items.length} items with tags: ${tags.join(', ')}`);
 
-    const results = [];
+    const results: Array<{
+      publicId: string;
+      type: 'image' | 'video' | 'view360';
+      tags: string[];
+      success: boolean;
+      error?: string;
+    }> = [];
     let successCount = 0;
     let errorCount = 0;
 
