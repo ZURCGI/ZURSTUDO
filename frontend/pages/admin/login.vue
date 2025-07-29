@@ -87,10 +87,10 @@ const onSubmit = async () => {
     await login(username.value, password.value);
     console.log('[Login Page] Login successful, redirecting...');
     // 登入成功後，導向到後台主頁
-    await navigateTo('/admin/dashboard', { external: true });
+    await navigateTo('/admin/dashboard');
   } catch (err: any) {
     console.error('[Login Page] Login failed:', err);
-    errorMsg.value = err?.data?.message || '登入失敗，請檢查您的帳號或密碼。'
+    errorMsg.value = err?.message || err?.data?.message || '登入失敗，請檢查您的帳號或密碼。'
   } finally {
     loading.value = false;
   }

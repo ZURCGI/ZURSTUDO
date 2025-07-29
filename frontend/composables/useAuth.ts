@@ -4,52 +4,36 @@ import { useCookie, useRouter, useRuntimeConfig } from '#app'
 import type { UserCredentials, AuthError } from 'types/project'
 
 export const useAuth = () => {
-  // 1. 前端可讀取的 Cookie 選項（不是 httpOnly）
-  const token = useCookie('auth-token', {
-    path: '/',
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  })
+  // 使用 ref 來存儲 token，而不是 cookie（因為後端使用 httpOnly cookie）
+  const token = ref<string>('')
   const user = ref<{ username: string; isAdmin: boolean; role?: string } | null>(null)
   const router = useRouter()
   const config = useRuntimeConfig()
 
-  const isLoggedIn = () => !!token.value
+  const isLoggedIn = () => !!user.value // 改為檢查用戶狀態而不是 token
 
   // 初始化用戶資訊 - 添加更好的錯誤處理
   const initUser = async () => {
-    // 只有在有 token 時才調用 API
-    if (token.value && token.value.trim() !== '') {
-      try {
-        console.log('[useAuth] Attempting to init user with token');
-        const userData = await $fetch<{ username: string; isAdmin: boolean; role?: string }>('/auth/me', {
-          baseURL: config.public.apiBase,
-          headers: {
-            'Authorization': `Bearer ${token.value}`
-          },
-          // 添加超時和錯誤處理
-          onResponseError: (error) => {
-            if (error.response?.status === 401) {
-              console.log('[useAuth] 401 error during initUser, clearing token');
-              token.value = ''
-              user.value = null
-              return
-            }
-            throw error
+    try {
+      console.log('[useAuth] Attempting to init user');
+      const userData = await $fetch<{ username: string; isAdmin: boolean; role?: string }>('/auth/me', {
+        baseURL: config.public.apiBase,
+        credentials: 'include', // 發送 cookie
+        // 添加超時和錯誤處理
+        onResponseError: (error) => {
+          if (error.response?.status === 401) {
+            console.log('[useAuth] 401 error during initUser');
+            user.value = null
+            return
           }
-        })
-        user.value = userData
-        console.log('[useAuth] User initialized successfully');
-      } catch (err: unknown) {
-        console.error('[useAuth] Failed to init user:', err)
-        // 如果 API 調用失敗，清除無效的 token
-        token.value = ''
-        user.value = null
-      }
-    } else {
-      // 沒有 token 時，確保用戶狀態為 null
+          throw error
+        }
+      })
+      user.value = userData
+      console.log('[useAuth] User initialized successfully');
+    } catch (err: unknown) {
+      console.error('[useAuth] Failed to init user:', err)
       user.value = null
-      console.log('[useAuth] No token found, user set to null');
     }
   }
 
@@ -57,6 +41,8 @@ export const useAuth = () => {
   const login = async (username: string, password: string) => {
     try {
       console.log('[useAuth] Attempting login for user:', username);
+      console.log('[useAuth] API Base URL:', config.public.apiBase);
+      
       const result = await $fetch<{ success?: boolean; access_token?: string; message?: string }>('/auth/login', {
         baseURL: config.public.apiBase,
         method: 'POST',
@@ -64,6 +50,7 @@ export const useAuth = () => {
         credentials: 'include', // 添加這行來接收 httpOnly cookie
         // 添加更好的錯誤處理
         onResponseError: (error) => {
+          console.error('[useAuth] Response error:', error);
           if (error.response?.status === 401) {
             console.log('[useAuth] 401 Unauthorized - Invalid credentials');
             throw new Error('使用者或密碼錯誤');
@@ -73,24 +60,17 @@ export const useAuth = () => {
       });
 
       console.log('[useAuth] Login response:', result);
+      console.log('[useAuth] Response type:', typeof result);
+      console.log('[useAuth] Response keys:', Object.keys(result));
 
-      // 檢查是否有 access_token 字段
-      if (result.access_token) {
-        token.value = result.access_token;
-        console.log('[useAuth] Login successful, token saved from response');
-        await initUser(); // Set user state after getting token
-      } else if (result.success) {
-        // 如果沒有 access_token 字段但有 success，可能是 cookie-based 認證
-        console.log('[useAuth] Login successful via cookie, checking user status');
-        // 嘗試調用 /auth/me 來驗證 cookie 是否有效
-        try {
-          await initUser();
-          console.log('[useAuth] Cookie-based authentication successful');
-        } catch (cookieError) {
-          console.error('[useAuth] Cookie-based authentication failed:', cookieError);
-          throw new Error('登入成功但無法驗證用戶狀態');
-        }
+      // 檢查登入是否成功
+      if (result && typeof result === 'object' && 'success' in result && result.success) {
+        console.log('[useAuth] Login successful, checking user status');
+        // 登入成功後，立即獲取用戶信息
+        await initUser();
+        console.log('[useAuth] User status updated after login');
       } else {
+        console.error('[useAuth] Unexpected response format:', result);
         throw new Error('登入響應格式不正確');
       }
     } catch (err: unknown) {
@@ -109,9 +89,7 @@ export const useAuth = () => {
       await $fetch('/auth/logout', {
         baseURL: config.public.apiBase,
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token.value}`
-        },
+        credentials: 'include', // 發送 cookie
       })
     } catch (err: unknown) {
       console.error('Logout API failed:', err)
@@ -128,9 +106,7 @@ export const useAuth = () => {
       await $fetch('/auth/change-password', {
         baseURL: config.public.apiBase,
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token.value}`
-        },
+        credentials: 'include', // 發送 cookie
         body: { newPassword },
       })
     } catch (err: unknown) {
