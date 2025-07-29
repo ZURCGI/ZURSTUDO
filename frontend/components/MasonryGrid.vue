@@ -49,9 +49,20 @@
         <video
           v-else-if="item.type === 'video'"
           :ref="(el) => setCardRefs(el)"
-          controls preload="metadata"
+          controls 
+          preload="metadata"
           class="w-full object-cover shadow"
-          style="display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
+          :style="{
+            display: 'block',
+            aspectRatio: '16/9',
+            margin: '0',
+            padding: '0',
+            width: '100%',
+            height: 'auto',
+            minHeight: '200px',
+            backgroundColor: '#000',
+            borderRadius: '4px'
+          }"
           :aria-label="`影片: ${item.description || item.publicId}`"
           :aria-describedby="`desc-${item.publicId}`"
           playsinline
@@ -59,15 +70,19 @@
           x5-playsinline
           x5-video-player-type="h5"
           x5-video-player-fullscreen="true"
+          muted
           @loadedmetadata="onVideoLoaded"
           @error="onVideoError"
           @canplay="onVideoCanPlay"
+          @loadstart="onVideoLoadStart"
         >
           <source :src="item.url" type="video/mp4" />
           <source :src="item.url" type="video/webm" />
           <source :src="item.url" type="video/ogg" />
           <track kind="captions" :src="`/subtitles/${item.publicId}.vtt`" srclang="zh" label="中文字幕" default />
-          您的瀏覽器不支援影片播放
+          <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #666; font-size: 14px;">
+            載入影片中...
+          </div>
         </video>
 
         <!-- 360° 全景 -->
@@ -76,11 +91,31 @@
           :ref="(el) => setCardRefs(el)"
           :id="`viewer-${item.publicId}`"
           class="w-full overflow-hidden shadow"
-          style="display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
+          :style="{
+            display: 'block',
+            aspectRatio: '16/9',
+            margin: '0',
+            padding: '0',
+            width: '100%',
+            height: 'auto',
+            minHeight: '200px',
+            backgroundColor: '#000',
+            borderRadius: '4px',
+            position: 'relative',
+            overflow: 'hidden'
+          }"
           :aria-label="`360度全景: ${item.description || item.publicId}`"
           :aria-describedby="`desc-${item.publicId}`"
           role="img"
-        ></div>
+        >
+          <!-- 載入提示 -->
+          <div 
+            :id="`loading-${item.publicId}`"
+            style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: #000; color: #fff; font-size: 14px; z-index: 1;"
+          >
+            載入 360° 全景中...
+          </div>
+        </div>
 
         <!-- 懸浮說明（可選，若要完全無提示可移除） -->
         <div
@@ -154,14 +189,32 @@ watch(
           // 動態導入 Viewer
           try {
             const { Viewer } = await import('@photo-sphere-viewer/core')
+            
+            // 檢測是否為手機端
+            const isMobile = window.innerWidth < 768
+            
             // 確保容器沒有白邊
             el.style.margin = '0'
             el.style.padding = '0'
             el.style.border = 'none'
             el.style.outline = 'none'
+            el.style.position = 'relative'
+            el.style.overflow = 'hidden'
+            el.style.width = '100%'
+            el.style.height = '100%'
             
-            // 檢測是否為手機端
-            const isMobile = window.innerWidth < 768
+            // 手機端特殊設置
+            if (isMobile) {
+              el.style.minHeight = '200px'
+              el.style.backgroundColor = '#000'
+              el.style.borderRadius = '4px'
+            }
+            
+            // 移除載入提示
+            const loadingEl = document.getElementById(`loading-${i.publicId}`)
+            if (loadingEl) {
+              loadingEl.style.display = 'none'
+            }
             
             viewerMap.set(i.publicId, new Viewer({
               container: el,
@@ -193,7 +246,13 @@ watch(
                   antialias: false,
                   alpha: false,
                   preserveDrawingBuffer: false
-                }
+                },
+                // 手機端容器設置
+                containerClass: 'mobile-viewer',
+                // 防止手機端跳動
+                defaultZoomLvl: 0,
+                minZoomLvl: 0,
+                maxZoomLvl: 2
               }),
               // 桌面端保持原有設置
               ...(!isMobile && {
@@ -203,8 +262,22 @@ watch(
                 }
               })
             }))
+            
+            console.log('[MasonryGrid] VIEW360 initialized for:', i.publicId, 'mobile:', isMobile)
           } catch (error) {
             console.error('Failed to load Photo Sphere Viewer:', error)
+            // 顯示錯誤信息
+            const loadingEl = document.getElementById(`loading-${i.publicId}`)
+            if (loadingEl) {
+              loadingEl.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #c62828; font-size: 14px; text-align: center; padding: 20px;">
+                  360° 全景載入失敗<br>
+                  <button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; font-size: 12px;">
+                    重新載入
+                  </button>
+                </div>
+              `
+            }
           }
         }
       })
@@ -343,6 +416,11 @@ function onVideoCanPlay(event: Event) {
   }
 }
 
+function onVideoLoadStart(event: Event) {
+  const video = event.target as HTMLVideoElement
+  console.log('[MasonryGrid] Video load start:', video.src)
+}
+
 // 影片/360 掛載後觸發動畫
 watch(
   () => items.map(i => i.publicId + ':' + i.url).join(','),
@@ -409,10 +487,37 @@ onMounted(async () => {
       videoElement.playsInline = true
       videoElement.preload = 'metadata'
       
+      // 強制設置樣式
+      videoElement.style.display = 'block'
+      videoElement.style.width = '100%'
+      videoElement.style.height = 'auto'
+      videoElement.style.minHeight = '200px'
+      videoElement.style.backgroundColor = '#000'
+      videoElement.style.borderRadius = '4px'
+      videoElement.style.position = 'relative'
+      videoElement.style.transform = 'none'
+      videoElement.style.transition = 'none'
+      
       // 強制重新載入
       if (videoElement.src) {
         videoElement.load()
       }
+    })
+    
+    // 手機端 VIEW360 初始化
+    const view360Containers = document.querySelectorAll('.masonry-item div[role="img"]')
+    view360Containers.forEach((container) => {
+      const containerEl = container as HTMLElement
+      // 確保容器穩定
+      containerEl.style.position = 'relative'
+      containerEl.style.overflow = 'hidden'
+      containerEl.style.width = '100%'
+      containerEl.style.height = 'auto'
+      containerEl.style.minHeight = '200px'
+      containerEl.style.backgroundColor = '#000'
+      containerEl.style.borderRadius = '4px'
+      containerEl.style.transform = 'none'
+      containerEl.style.transition = 'none'
     })
   }
   
@@ -613,6 +718,51 @@ function hasMore() {
     /* 確保影片載入 */
     object-fit: cover;
     min-height: 200px;
+    /* 防止跳動 */
+    position: relative;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* 手機端 VIEW360 容器優化 */
+  .masonry-item div[role="img"] {
+    /* 確保觸控事件正常工作 */
+    touch-action: pan-x pan-y pinch-zoom;
+    /* 防止意外選擇 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* 防止跳動 */
+    position: relative !important;
+    transform: none !important;
+    transition: none !important;
+    /* 確保容器穩定 */
+    overflow: hidden !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 200px !important;
+    background: #000 !important;
+    border-radius: 4px !important;
+  }
+  
+  /* 手機端 VIEW360 內部容器 */
+  .masonry-item .psv-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  
+  /* 手機端 VIEW360 畫布 */
+  .masonry-item .psv-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
   }
   
   /* 手機端影片載入狀態 */
@@ -634,16 +784,6 @@ function hasMore() {
     font-size: 14px;
     text-align: center;
     padding: 20px;
-  }
-  
-  /* 手機端 VIEW360 觸控優化 */
-  .masonry-item div[role="img"] {
-    /* 確保觸控事件正常工作 */
-    touch-action: pan-x pan-y pinch-zoom;
-    /* 防止意外選擇 */
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
   }
   
   /* 手機端圖片觸控優化 */
