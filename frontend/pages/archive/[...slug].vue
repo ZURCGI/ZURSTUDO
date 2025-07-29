@@ -123,6 +123,7 @@ import { useAuth } from '~/composables/useAuth'
 import { gsap } from 'gsap'
 import DetailPageImage from '@/components/DetailPageImage.vue'
 import { useErrorHandler } from '~/composables/useErrorHandler'
+import { AutorotatePlugin } from '@photo-sphere-viewer/autorotate-plugin';
 
 interface MediaItem {
   publicId: string
@@ -238,7 +239,10 @@ watch(media, async (newMedia) => {
           viewerInstance.value = new Viewer({
             container: viewerContainer.value,
             panorama: newMedia.url,
-            navbar: ['autorotate', 'zoom', 'fullscreen'],
+            navbar: ['zoom', 'fullscreen'],
+            plugins: [
+              [AutorotatePlugin, { autorotateSpeed: '2rpm' }]
+            ],
             defaultZoomLvl: 0,
             moveSpeed: 1.5,
             zoomSpeed: 1,
@@ -439,10 +443,13 @@ function resetView() {
 
 function toggleAutoRotate() {
   if (viewerInstance.value) {
-    if (autoRotate.value) {
-      viewerInstance.value.stopAutoRotate();
-    } else {
-      viewerInstance.value.startAutoRotate();
+    const autorotate = viewerInstance.value.getPlugin(AutorotatePlugin);
+    if (autorotate) {
+      if (autoRotate.value) {
+        autorotate.stop();
+      } else {
+        autorotate.start();
+      }
     }
   }
 }

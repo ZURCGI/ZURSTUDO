@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@photo-sphere-viewer/autorotate-plugin": "^5.13.2"
+  }
+}
