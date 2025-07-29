@@ -24,7 +24,9 @@ export const useAuth = () => {
         console.log('[useAuth] Attempting to init user with token');
         const userData = await $fetch<{ username: string; isAdmin: boolean; role?: string }>('/auth/me', {
           baseURL: config.public.apiBase,
-          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token.value}`
+          },
           // 添加超時和錯誤處理
           onResponseError: (error) => {
             if (error.response?.status === 401) {
@@ -79,7 +81,9 @@ export const useAuth = () => {
       await $fetch('/auth/logout', {
         baseURL: config.public.apiBase,
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token.value}`
+        },
       })
     } catch (err: unknown) {
       console.error('Logout API failed:', err)
@@ -96,7 +100,9 @@ export const useAuth = () => {
       await $fetch('/auth/change-password', {
         baseURL: config.public.apiBase,
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token.value}`
+        },
         body: { newPassword },
       })
     } catch (err: unknown) {
