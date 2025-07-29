@@ -116,8 +116,24 @@ const onPreloaderFinish = () => {
 
 function onScroll() {
   const y = window.scrollY
-  showNav.value = y < lastScrollY
-  transparent.value = y > 0
+  
+  // 手機端特殊處理
+  if (window.innerWidth < 768) {
+    // 在頂部時顯示導覽列
+    if (y <= 10) {
+      showNav.value = true
+      transparent.value = false
+    } else {
+      // 向下滾動時隱藏，向上滾動時顯示
+      showNav.value = y < lastScrollY
+      transparent.value = y > 50
+    }
+  } else {
+    // 桌面端保持原有邏輯
+    showNav.value = y < lastScrollY
+    transparent.value = y > 0
+  }
+  
   lastScrollY = y
 }
 

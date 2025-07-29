@@ -56,6 +56,9 @@
           :aria-describedby="`desc-${item.publicId}`"
           playsinline
           webkit-playsinline
+          x5-playsinline
+          x5-video-player-type="h5"
+          x5-video-player-fullscreen="true"
         >
           <source :src="item.url" type="video/mp4" />
           <track kind="captions" :src="`/subtitles/${item.publicId}.vtt`" srclang="zh" label="中文字幕" default />
@@ -152,6 +155,9 @@ watch(
             el.style.border = 'none'
             el.style.outline = 'none'
             
+            // 檢測是否為手機端
+            const isMobile = window.innerWidth < 768
+            
             viewerMap.set(i.publicId, new Viewer({
               container: el,
               panorama: i.url,
@@ -159,20 +165,38 @@ watch(
               defaultZoomLvl: 0,
               defaultYaw: 2.0,   // 右側（約114.6度）
               defaultPitch: 0.0,  // 水平
-              moveSpeed: 1.5,  // 移動速度
-              zoomSpeed: 1,    // 縮放速度
+              moveSpeed: isMobile ? 2.0 : 1.5,  // 手機端移動速度更快
+              zoomSpeed: isMobile ? 1.5 : 1,    // 手機端縮放速度更快
               // 手機端優化
               touchmoveTwoFingers: true,
-              mousewheel: false,
-              mousemove: true,
+              mousewheel: !isMobile,
+              mousemove: !isMobile,
               // 觸控優化
               touchPan: true,
               touchZoom: true,
-              // 性能優化
-              renderParameters: {
-                antialias: false,
-                alpha: false
-              }
+              // 手機端特殊設置
+              ...(isMobile && {
+                // 手機端禁用滑鼠事件
+                mousewheel: false,
+                mousemove: false,
+                // 增強觸控響應
+                touchmoveTwoFingers: true,
+                // 防止手機端意外縮放
+                pinchToZoom: true,
+                // 手機端性能優化
+                renderParameters: {
+                  antialias: false,
+                  alpha: false,
+                  preserveDrawingBuffer: false
+                }
+              }),
+              // 桌面端保持原有設置
+              ...(!isMobile && {
+                renderParameters: {
+                  antialias: false,
+                  alpha: false
+                }
+              })
             }))
           } catch (error) {
             console.error('Failed to load Photo Sphere Viewer:', error)
@@ -473,5 +497,54 @@ function hasMore() {
 }
 
 /* Responsive adjustments - 移除固定 margin-bottom，使用動態設定 */
+
+/* 手機端特殊樣式 */
+@media (max-width: 767px) {
+  /* 手機端影片控制優化 */
+  .masonry-item video {
+    /* 確保影片在手機端可以正常控制 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* 防止手機端意外縮放 */
+    touch-action: manipulation;
+    /* 確保控制列可見 */
+    -webkit-media-controls: auto;
+    -webkit-media-controls-panel: auto;
+  }
+  
+  /* 手機端 VIEW360 觸控優化 */
+  .masonry-item div[role="img"] {
+    /* 確保觸控事件正常工作 */
+    touch-action: pan-x pan-y pinch-zoom;
+    /* 防止意外選擇 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* 手機端圖片觸控優化 */
+  .masonry-item img {
+    /* 防止意外選擇 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* 確保觸控響應 */
+    touch-action: manipulation;
+  }
+  
+  /* 手機端連結觸控優化 */
+  .masonry-item a {
+    /* 確保觸控響應 */
+    touch-action: manipulation;
+    /* 防止意外選擇 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
 </style>
 
