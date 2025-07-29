@@ -19,9 +19,8 @@
               class="h-8 w-auto"
             />
           </NuxtLink>
-          <!-- 桌面端导航 & Instagram（移动端 v-if 隐藏） -->
+          <!-- 桌面端导航 & Instagram（移动端隐藏） -->
           <div
-            v-if="!menuOpen"
             class="ml-auto hidden md:flex items-center space-x-6 uppercase text-sm"
           >
             <NuxtLink to="/info" class="hover:underline">Info</NuxtLink>
@@ -67,12 +66,12 @@
         </div>
       </div>
       <!-- 移动端折叠菜单 -->
-      <div v-if="menuOpen" class="md:hidden bg-white/75">
+      <div v-if="menuOpen" class="md:hidden bg-white/95 backdrop-blur-sm border-t border-gray-200">
         <div class="px-4 pt-2 pb-4 space-y-1 uppercase text-sm">
           <NuxtLink
             to="/info"
-            class="block text-gray-800 hover:text-black py-2"
-            exact-active-class="border-l-4 border-gray-300 bg-gray-100"
+            class="block text-gray-800 hover:text-black py-3 px-2 rounded-lg hover:bg-gray-100 transition-colors"
+            exact-active-class="bg-blue-50 text-blue-700 border-l-4 border-blue-500"
             @click="menuOpen = false"
           >
             Info
@@ -81,7 +80,8 @@
             href="https://www.instagram.com/zur_cgistudio/?igsh=MW1jd3pnM3doeG1qbg%3D%3D#"
             target="_blank"
             rel="noopener noreferrer"
-            class="flex items-center text-gray-800 hover:text-black py-2 space-x-2"
+            class="flex items-center text-gray-800 hover:text-black py-3 px-2 rounded-lg hover:bg-gray-100 transition-colors space-x-2"
+            @click="menuOpen = false"
           >
             <Icon name="simple-icons:instagram" width="20" height="20" />
             <span>Instagram</span>
