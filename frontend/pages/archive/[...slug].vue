@@ -31,8 +31,42 @@
             aria-label="下一張"
           >›</NuxtLink>
           <!-- 360° 全景 -->
-          <div v-if="media.type === 'view360'" class="block mx-auto" style="width:1000px; height:562px;">
-            <div ref="viewerContainer" style="width:100%; height:100%;"></div>
+          <div v-if="media.type === 'view360'" class="block mx-auto relative" style="width:1000px; height:562px;">
+            <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
+            
+            <!-- 載入狀態 -->
+            <div v-if="!viewerInstance" class="view360-loading">
+              <div class="flex flex-col items-center gap-3 text-white">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                <span class="text-sm">載入 360° 全景中...</span>
+              </div>
+            </div>
+            
+            <!-- 自定義控制列覆蓋層 -->
+            <div v-if="viewerInstance" class="view360-controls">
+              <button 
+                @click="resetView"
+                class="view360-controls-btn"
+                title="重置視角"
+              >
+                <Icon name="heroicons:arrow-path" class="w-4 h-4" />
+              </button>
+              <button 
+                @click="toggleAutoRotate"
+                :class="['view360-controls-btn', autoRotate ? 'bg-white/30' : '']"
+                :title="autoRotate ? '停止自動旋轉' : '開始自動旋轉'"
+              >
+                <Icon name="heroicons:arrow-path-rounded-square" class="w-4 h-4" />
+              </button>
+              <div class="w-px h-6 bg-white/30"></div>
+              <button 
+                @click="toggleFullscreen"
+                class="view360-controls-btn"
+                title="全螢幕"
+              >
+                <Icon name="heroicons:arrows-pointing-out" class="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <!-- 圖片 -->
           <div v-else-if="media.type === 'image'" class="relative w-fit mx-auto">
@@ -113,6 +147,10 @@ const viewerInstance = ref<any>(null)
 const mediaContainer = ref<HTMLElement | null>(null)
 const descriptionWrapper = ref<HTMLElement | null>(null)
 const isAnimating = ref(false)
+
+// View360 控制狀態
+const autoRotate = ref(false)
+const isFullscreen = ref(false)
 
 // 取得 publicId
 const slugParam = route.params.slug as string | string[]
@@ -200,12 +238,25 @@ watch(media, async (newMedia) => {
           viewerInstance.value = new Viewer({
             container: viewerContainer.value,
             panorama: newMedia.url,
-            navbar: ['zoom', 'fullscreen'],
+            navbar: ['autorotate', 'zoom', 'fullscreen'],
+            defaultZoomLvl: 0,
+            moveSpeed: 1.5,
+            zoomSpeed: 1,
+            autorotateLat: 0,
+            autorotateSpeed: '2rpm',
+            mousewheel: true,
+            touchmoveTwoFingers: true,
             size: {
               width: viewerContainer.value.offsetWidth,
               height: viewerContainer.value.offsetHeight
             }
           });
+          
+          // 監聽自動旋轉狀態變化
+          viewerInstance.value.addEventListener('autorotate', (e: any) => {
+            autoRotate.value = e.detail.enabled;
+          });
+          
           animateEntrance();
         } else {
           // 使用統一的延遲重試
@@ -371,7 +422,47 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
+  // 清理 View360 實例
+  if (viewerInstance.value) {
+    viewerInstance.value.destroy?.();
+    viewerInstance.value = null;
+  }
 })
+
+// View360 控制功能
+function resetView() {
+  if (viewerInstance.value) {
+    viewerInstance.value.setZoomLevel(0);
+    viewerInstance.value.setPosition({ longitude: 0, latitude: 0 });
+  }
+}
+
+function toggleAutoRotate() {
+  if (viewerInstance.value) {
+    if (autoRotate.value) {
+      viewerInstance.value.stopAutorotate();
+    } else {
+      viewerInstance.value.startAutorotate();
+    }
+  }
+}
+
+function toggleFullscreen() {
+  if (viewerInstance.value) {
+    if (isFullscreen.value) {
+      viewerInstance.value.exitFullscreen();
+    } else {
+      viewerInstance.value.enterFullscreen();
+    }
+  }
+}
+
+// 監聽全螢幕狀態變化
+onMounted(() => {
+  document.addEventListener('fullscreenchange', () => {
+    isFullscreen.value = !!document.fullscreenElement;
+  });
+});
 
 // 7. 手勢滑動切換
 const router = useRouter()
@@ -388,4 +479,39 @@ function onTouchEnd(e: TouchEvent) {
 
 <style scoped>
 a { text-decoration: none; color: inherit; }
+
+/* View360 控制列樣式 */
+.view360-controls {
+  @apply absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2 text-white;
+  z-index: 10;
+}
+
+.view360-controls button {
+  @apply p-2 hover:bg-white/20 rounded-full transition-colors duration-200;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.view360-controls button:active {
+  @apply bg-white/30;
+}
+
+/* 手機端適配 */
+@media (max-width: 768px) {
+  .view360-controls {
+    @apply bottom-2 px-3 py-1;
+  }
+  
+  .view360-controls button {
+    @apply p-1;
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
+/* 載入動畫 */
+.view360-loading {
+  @apply absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm;
+  z-index: 5;
+}
 </style> 
