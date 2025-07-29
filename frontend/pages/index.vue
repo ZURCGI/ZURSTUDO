@@ -1,46 +1,45 @@
 <!-- frontend/pages/index.vue -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-    <div class="text-center">
-      <h1 class="text-6xl font-bold text-gray-900 mb-4">ZUR CGI Studio</h1>
-      <p class="text-xl text-gray-600 mb-8">世界級的 3D 渲染與視覺化專家</p>
+  <div class="min-h-screen bg-blue-50 flex items-center justify-center">
+    <div class="text-center p-8">
+      <h1 class="text-4xl font-bold text-blue-900 mb-4">ZUR CGI Studio</h1>
+      <p class="text-lg text-blue-700 mb-6">測試頁面 - 靜態生成</p>
       
-      <div class="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
-        <h2 class="text-2xl font-semibold mb-4">測試頁面</h2>
-        <p class="text-gray-600 mb-4">如果您看到這個頁面，表示靜態生成正常工作！</p>
+      <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-auto">
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">狀態檢查</h2>
         
-        <div class="space-y-2 text-sm text-gray-500">
-          <p>✅ HTML 已正確生成</p>
-          <p>✅ CSS 樣式已載入</p>
-          <p>✅ JavaScript 正在運行</p>
+        <div class="space-y-2 text-sm text-gray-600">
+          <p>✅ HTML 已載入</p>
+          <p>✅ Vue.js 正在運行</p>
+          <p>✅ 響應式數據: {{ message }}</p>
         </div>
         
         <button 
-          @click="testClick" 
-          class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          @click="incrementCount" 
+          class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
-          點擊測試
+          點擊測試 ({{ count }})
         </button>
         
-        <p v-if="clickCount > 0" class="mt-4 text-sm text-gray-600">
-          已點擊 {{ clickCount }} 次
+        <p class="mt-4 text-xs text-gray-500">
+          如果這個頁面正常顯示，表示靜態生成工作正常
         </p>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 
-const clickCount = ref(0)
+const count = ref(0)
+const message = ref('Hello from Vue!')
 
-function testClick() {
-  clickCount.value++
-  console.log('按鈕被點擊了！', clickCount.value)
+function incrementCount() {
+  count.value++
+  console.log('Count:', count.value)
 }
 
 // 確保頁面載入時有日誌
-console.log('ZUR CGI Studio - 測試頁面已載入')
-console.log('當前時間:', new Date().toLocaleString())
+console.log('ZUR CGI Studio - 簡化測試頁面已載入')
 </script>

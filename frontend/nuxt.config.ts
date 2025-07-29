@@ -97,66 +97,19 @@ export default defineNuxtConfig({
         port: 24678,
       },
     },
-    optimizeDeps: {
-      include: ['three'],
-    },
-    ssr: {
-      noExternal: ['three'],
-    },
-    define: {
-      // 解決 Three.js 多重實例警告
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-    },
-    // 抑制開發時的警告
-    logLevel: 'warn',
-    resolve: {
-      alias: {
-        'three': require.resolve('three')
-      }
-    },
-    // 解決中間件重複註冊警告
-    // 使用 suppress-warnings.client.ts 插件來處理警告
-    // 優化 build 配置
     build: {
       rollupOptions: {
-        external: [],
         output: {
           manualChunks: {
-            // 核心框架
-            'vendor': ['vue', 'vue-router'],
-            // 動畫庫
-            'animation': ['gsap'],
-            // 3D 相關
-            'three': ['three'],
-            'photo-sphere': ['@photo-sphere-viewer/core'],
-            // 圖表庫
-            'charts': ['chart.js', 'vue-chartjs', 'chartjs-chart-geo'],
-            // 影片播放
-            'video': ['video.js'],
-            // 地圖資料
-            'maps': ['topojson-client'],
-            // Cloudinary
-            'cloudinary': ['cloudinary'],
-          },
-          // 設置 chunk 大小警告閾值
-          chunkFileNames: 'assets/js/[name]-[hash].js',
-          entryFileNames: 'assets/js/[name]-[hash].js',
-          assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
-        },
-      },
-      // 設置 chunk 大小警告閾值為 1MB
-      chunkSizeWarningLimit: 1000,
-      // 啟用 terser 壓縮
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: process.env.NODE_ENV === 'production',
-          drop_debugger: true,
-        },
-      },
+            vendor: ['vue', 'vue-router'],
+            nuxt: ['#app']
+          }
+        }
+      }
     },
-    // 靜態資源處理
-    assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp'],
+    optimizeDeps: {
+      include: ['vue', 'vue-router']
+    }
   },
 
   // ── 快取優化 ─────────────────────────────────────────
