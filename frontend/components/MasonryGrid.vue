@@ -40,8 +40,6 @@
           :quality="85"
           :showProgress="true"
           class="w-full object-cover shadow"
-          style="pointer-events: none;"
-          @loaded="onImageLoaded(item.publicId)"
           :alt="item.description || item.publicId || 'ZUR Image'"
           :aria-describedby="`desc-${item.publicId}`"
         />
@@ -1072,6 +1070,34 @@ function getItemLink(item: { type: string; url: string; publicId: string; descri
     user-select: none;
     /* 確保觸控響應 */
     touch-action: manipulation;
+    /* 確保圖片顯示 */
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+  }
+  
+  /* 手機端圖片載入狀態 */
+  .masonry-item img:not([src]) {
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+  
+  /* 手機端圖片錯誤狀態 */
+  .masonry-item img[data-error="true"] {
+    background: #ffebee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c62828;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
   }
   
   /* 手機端連結觸控優化 */

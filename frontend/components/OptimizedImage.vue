@@ -9,6 +9,7 @@
     @load="onImageLoad"
     @error="onImageError"
     class="w-full h-auto block"
+    style="display: block; width: 100%; height: auto; object-fit: cover; border-radius: 4px;"
   />
 </template>
 
@@ -74,8 +75,51 @@ onUnmounted(() => {
 <style scoped>
 /* 確保圖片沒有額外的間距 */
 img {
-  margin: 0;
-  padding: 0;
   display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+}
+
+/* 手機端圖片優化 */
+@media (max-width: 767px) {
+  img {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover !important;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    min-height: 200px;
+    /* 防止意外選擇 */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* 確保觸控響應 */
+    touch-action: manipulation;
+  }
+  
+  /* 手機端圖片載入狀態 */
+  img:not([src]) {
+    background: #f0f0f0;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+  
+  /* 手機端圖片錯誤狀態 */
+  img[data-error="true"] {
+    background: #ffebee;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: #c62828;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+  }
 }
 </style> 
