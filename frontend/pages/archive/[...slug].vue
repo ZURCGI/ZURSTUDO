@@ -78,12 +78,6 @@
     <h1 class="text-2xl font-bold">404</h1>
     找不到此媒體：<code>{{ publicId }}</code>
   </div>
-  
-  <!-- 載入中提示 -->
-  <div v-if="loading && !media" class="text-center text-gray-500 py-8">
-    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-    <p>載入中...</p>
-  </div>
 </template>
 
 <script setup lang="ts">
