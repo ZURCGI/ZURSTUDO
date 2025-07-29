@@ -14,9 +14,8 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
     prerender: {
-      crawlLinks: false,
-      routes: [],
-      ignore: ['/**']
+      crawlLinks: true,
+      routes: ['/']
     }
   },
 
@@ -197,6 +196,8 @@ export default defineNuxtConfig({
 
   // ── 中間件配置 ───────────────────────────────────────
   routeRules: {
+    // SPA fallback for client-side routing
+    '/**': { ssr: false },
     '/.well-known/appspecific/com.chrome.devtools.json': {
       statusCode: 200,
       body: '{}',
