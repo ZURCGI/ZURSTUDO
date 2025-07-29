@@ -1,4 +1,4 @@
-import * as cloudinary from 'cloudinary';
+import cloudinary from 'cloudinary';
 import { Controller, Get, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { CloudinaryService } from './cloudinary.service';

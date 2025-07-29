@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -12,7 +12,7 @@ import {
   CloudinaryResource,
   CloudinaryApiResponse,
 } from '../upload/cloudinary.service';
-import * as cloudinary from 'cloudinary';
+import cloudinary from 'cloudinary';
 
 @Injectable()
 export class MediaService {
@@ -316,108 +316,46 @@ export class MediaService {
 
   // 刪除媒體
   async deleteMedia(type: 'image' | 'video' | 'view360', publicId: string) {
-    this.logger.log(
-      `[MediaService] deleteMedia called: type=${type}, publicId=${publicId}`,
-    );
-
-    // 驗證 publicId 格式和路徑
-    if (!publicId) {
-      throw new BadRequestException('publicId 不能為空');
-    }
-
-    // 檢查 publicId 是否包含正確的 folder 前綴
-    const expectedPrefix =
-      type === 'image'
-        ? 'zur_images/'
-        : type === 'video'
-          ? 'zur_videos/'
-          : 'zur_view360/';
-
-    if (!publicId.startsWith(expectedPrefix)) {
-      this.logger.warn(
-        `[MediaService] publicId 路徑不匹配: expected=${expectedPrefix}, actual=${publicId}`,
-      );
-      // 不拋出錯誤，因為可能是舊資料或手動上傳的檔案
-    }
+    this.logger.log(`deleteMedia called: type=${type}, publicId=${publicId}`);
 
     try {
-      // 先檢查資料庫中是否存在該記錄
-      let existingRecord: any = null;
+      // 先從資料庫刪除
+      let deletedFromDb = false;
       if (type === 'image') {
-        existingRecord = await this.imgRepo.findOne({ where: { publicId } });
-      } else if (type === 'video') {
-        existingRecord = await this.vidRepo.findOne({ where: { publicId } });
-      } else if (type === 'view360') {
-        existingRecord = await this.v360Repo.findOne({ where: { publicId } });
-      }
-
-      if (!existingRecord) {
-        this.logger.warn(
-          `[MediaService] 資料庫中找不到記錄: type=${type}, publicId=${publicId}`,
-        );
-        // 即使資料庫沒有記錄，也嘗試刪除 Cloudinary 檔案
-      }
-
-      // 從 Cloudinary 刪除檔案
-      this.logger.log(
-        `[MediaService] 開始刪除 Cloudinary 檔案: type=${type}, publicId=${publicId}`,
-      );
-      await this.cloudinaryService.deleteFromCloudinary(publicId, type);
-      this.logger.log(
-        `[MediaService] Cloudinary 刪除成功: publicId=${publicId}`,
-      );
-
-      // 從資料庫刪除記錄
-      let deleted = false;
-      let result: any = null;
-      if (existingRecord) {
-        this.logger.log(
-          `[MediaService] 開始刪除資料庫記錄: type=${type}, publicId=${publicId}`,
-        );
-
-        if (type === 'image') {
-          result = await this.imgRepo.delete({ publicId });
-          deleted = (result.affected || 0) > 0;
-        } else if (type === 'video') {
-          result = await this.vidRepo.delete({ publicId });
-          deleted = (result.affected || 0) > 0;
-        } else if (type === 'view360') {
-          result = await this.v360Repo.delete({ publicId });
-          deleted = (result.affected || 0) > 0;
+        const image = await this.imgRepo.findOne({ where: { publicId } });
+        if (image) {
+          await this.imgRepo.remove(image);
+          deletedFromDb = true;
         }
-
-        this.logger.log(
-          `[MediaService] 資料庫刪除結果: deleted=${deleted}, affected=${result?.affected || 0}`,
-        );
+      } else if (type === 'video') {
+        const video = await this.vidRepo.findOne({ where: { publicId } });
+        if (video) {
+          await this.vidRepo.remove(video);
+          deletedFromDb = true;
+        }
+      } else if (type === 'view360') {
+        const view360 = await this.v360Repo.findOne({ where: { publicId } });
+        if (view360) {
+          await this.v360Repo.remove(view360);
+          deletedFromDb = true;
+        }
       }
 
-      return {
-        success: true,
-        deleted,
-        cloudinaryDeleted: true,
-        dbRecordExisted: !!existingRecord,
-        message: `已刪除 ${type}: ${publicId}`,
-      };
+      if (!deletedFromDb) {
+        throw new NotFoundException(`找不到 ${type} 記錄: ${publicId}`);
+      }
+
+      // 從 Cloudinary 刪除
+      const resourceType = type === 'view360' ? 'image' : type;
+      await this.cloudinaryService.deleteResource(publicId, resourceType);
+
+      // 清除快取
+      await this.clearCache('media_list');
+
+      this.logger.log(`deleteMedia success: ${type} ${publicId}`);
+      return { success: true, message: '刪除成功' };
     } catch (error) {
-      this.logger.error(
-        `[MediaService] deleteMedia error: type=${type}, publicId=${publicId}, error=${error.message}`,
-      );
-
-      // 如果是 Cloudinary 刪除失敗，不要刪除資料庫記錄
-      if (
-        error.message.includes('Delete failed') ||
-        error.message.includes('Cloudinary')
-      ) {
-        this.logger.error(
-          `[MediaService] Cloudinary 刪除失敗，保留資料庫記錄: publicId=${publicId}`,
-        );
-        throw new BadRequestException(`Cloudinary 刪除失敗: ${error.message}`);
-      }
-
-      // 如果是資料庫操作失敗，但 Cloudinary 已刪除，記錄警告
-      this.logger.error(
-        `[MediaService] 資料庫操作失敗，但 Cloudinary 檔案可能已被刪除: publicId=${publicId}`,
-      );
+      this.logger.error(`deleteMedia error: ${error.message}`);
       throw error;
     }
   }
@@ -553,37 +491,78 @@ export class MediaService {
     items: Array<{ type: 'image' | 'video' | 'view360'; publicId: string }>,
     folder: string,
   ) {
-    this.logger.log(
-      `batchMoveToFolder called with ${items.length} items, folder: ${folder}`,
-    );
+    this.logger.log(`batchMoveToFolder called: ${items.length} items to ${folder}`);
 
-    const results = {
-      success: [] as string[],
-      failed: [] as string[],
-      total: items.length,
-    };
+    const results = [];
+    let successCount = 0;
+    let errorCount = 0;
 
     for (const item of items) {
       try {
-        // 使用 Cloudinary API 移動檔案
-        await this.cloudinaryService.moveToFolder(
+        // 從 Cloudinary 移動檔案
+        const newPublicId = `${folder}/${item.publicId.split('/').pop()}`;
+        const resourceType = item.type === 'view360' ? 'image' : item.type;
+        
+        await this.cloudinaryService.renameResource(
           item.publicId,
-          folder,
-          item.type,
+          newPublicId,
+          resourceType,
         );
-        results.success.push(`${item.type}:${item.publicId}`);
+
+        // 更新資料庫記錄
+        if (item.type === 'image') {
+          await this.imgRepo.update(
+            { publicId: item.publicId },
+            { publicId: newPublicId },
+          );
+        } else if (item.type === 'video') {
+          await this.vidRepo.update(
+            { publicId: item.publicId },
+            { publicId: newPublicId },
+          );
+        } else if (item.type === 'view360') {
+          await this.v360Repo.update(
+            { publicId: item.publicId },
+            { publicId: newPublicId },
+          );
+        }
+
+        results.push({
+          publicId: item.publicId,
+          newPublicId,
+          type: item.type,
+          success: true,
+        });
+        successCount++;
       } catch (error) {
         this.logger.error(
-          `Failed to move ${item.type}:${item.publicId}: ${error.message}`,
+          `batchMoveToFolder failed for ${item.publicId}: ${error.message}`,
         );
-        results.failed.push(`${item.type}:${item.publicId}`);
+        results.push({
+          publicId: item.publicId,
+          type: item.type,
+          success: false,
+          error: error.message,
+        });
+        errorCount++;
       }
     }
 
+    // 清除快取
+    await this.clearCache('media_list');
+
+    this.logger.log(
+      `batchMoveToFolder completed: ${successCount} success, ${errorCount} errors`,
+    );
+
     return {
-      success: true,
+      success: successCount > 0,
       results,
-      message: `批次移動完成：成功 ${results.success.length} 個，失敗 ${results.failed.length} 個`,
+      summary: {
+        total: items.length,
+        success: successCount,
+        error: errorCount,
+      },
     };
   }
 
@@ -594,33 +573,54 @@ export class MediaService {
     items: Array<{ type: 'image' | 'video' | 'view360'; publicId: string }>,
     tags: string[],
   ) {
-    this.logger.log(
-      `batchTag called with ${items.length} items, tags: ${tags.join(', ')}`,
-    );
+    this.logger.log(`batchTag called: ${items.length} items with tags: ${tags.join(', ')}`);
 
-    const results = {
-      success: [] as string[],
-      failed: [] as string[],
-      total: items.length,
-    };
+    const results = [];
+    let successCount = 0;
+    let errorCount = 0;
 
     for (const item of items) {
       try {
-        // 使用 Cloudinary API 添加標籤
-        await this.cloudinaryService.addTags(item.publicId, tags, item.type);
-        results.success.push(`${item.type}:${item.publicId}`);
+        // 為每個標籤添加
+        for (const tag of tags) {
+          const resourceType = item.type === 'view360' ? 'image' : item.type;
+          await this.cloudinaryService.addTag(item.publicId, tag, resourceType);
+        }
+
+        results.push({
+          publicId: item.publicId,
+          type: item.type,
+          tags,
+          success: true,
+        });
+        successCount++;
       } catch (error) {
         this.logger.error(
-          `Failed to tag ${item.type}:${item.publicId}: ${error.message}`,
+          `batchTag failed for ${item.publicId}: ${error.message}`,
         );
-        results.failed.push(`${item.type}:${item.publicId}`);
+        results.push({
+          publicId: item.publicId,
+          type: item.type,
+          tags,
+          success: false,
+          error: error.message,
+        });
+        errorCount++;
       }
     }
 
+    this.logger.log(
+      `batchTag completed: ${successCount} success, ${errorCount} errors`,
+    );
+
     return {
-      success: true,
+      success: successCount > 0,
       results,
-      message: `批次標籤完成：成功 ${results.success.length} 個，失敗 ${results.failed.length} 個`,
+      summary: {
+        total: items.length,
+        success: successCount,
+        error: errorCount,
+      },
     };
   }
 
@@ -991,12 +991,11 @@ export class MediaService {
     this.logger.log('getTags called');
 
     try {
-      // 從 Cloudinary 獲取所有標籤
-      const result = await this.cloudinaryService.getAllTags();
-
+      const tags = await this.cloudinaryService.getAllTags();
+      this.logger.log(`getTags success: ${tags.length} tags`);
       return {
-        success: true,
-        tags: result.tags || [],
+        tags,
+        count: tags.length,
       };
     } catch (error) {
       this.logger.error(`getTags error: ${error.message}`);
