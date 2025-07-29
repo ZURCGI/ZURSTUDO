@@ -1,0 +1,5 @@
+[33mbc46ceb[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m fix: correct health check path from /api/health to /health
+[33m86304b8[m Create clean render.yaml without duplicates
+[33m2d4496f[m Clean up render.yaml: remove duplicates and fix formatting
+[33m005c309[m Merge branch 'master' of https://github.com/ZURCGI/ZURSTUDO
+[33m79cbc37[m Remove MEDIA_EDITOR_SETUP.md and update render.yaml fix
