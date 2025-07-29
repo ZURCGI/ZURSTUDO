@@ -482,28 +482,46 @@ a { text-decoration: none; color: inherit; }
 
 /* View360 控制列樣式 */
 .view360-controls {
-  @apply absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-full px-4 py-2 text-white;
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  color: white;
   z-index: 10;
 }
 
 .view360-controls button {
-  @apply p-2 hover:bg-white/20 rounded-full transition-colors duration-200;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
   min-width: 32px;
   min-height: 32px;
 }
 
+.view360-controls button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
 .view360-controls button:active {
-  @apply bg-white/30;
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* 手機端適配 */
 @media (max-width: 768px) {
   .view360-controls {
-    @apply bottom-2 px-3 py-1;
+    bottom: 0.5rem;
+    padding: 0.25rem 0.75rem;
   }
   
   .view360-controls button {
-    @apply p-1;
+    padding: 0.25rem;
     min-width: 28px;
     min-height: 28px;
   }
@@ -511,7 +529,13 @@ a { text-decoration: none; color: inherit; }
 
 /* 載入動畫 */
 .view360-loading {
-  @apply absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
   z-index: 5;
 }
 </style> 
