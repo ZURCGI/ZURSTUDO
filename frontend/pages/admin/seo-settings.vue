@@ -244,7 +244,14 @@ const faqTab = ref('zh')
 
 // 取得現有設定
 onMounted(async () => {
-  const data = await $fetch(`${config.public.apiBase}/settings`, { credentials: 'include' })
+  const { token } = useAuth()
+  const headers: Record<string, string> = {}
+  
+  if (token.value) {
+    headers['Authorization'] = `Bearer ${token.value}`
+  }
+  
+  const data = await $fetch(`${config.public.apiBase}/settings`, { headers })
   Object.assign(form.value, data)
   if (!Array.isArray(form.value.faqListZh)) {
     form.value.faqListZh = []
@@ -358,10 +365,17 @@ function autoOptimizeSEO() {
 
 // 儲存設定
 async function saveSettings() {
+  const { token } = useAuth()
+  const headers: Record<string, string> = {}
+  
+  if (token.value) {
+    headers['Authorization'] = `Bearer ${token.value}`
+  }
+  
   await $fetch(`${config.public.apiBase}/settings`, {
     method: 'PUT',
     body: form.value,
-    credentials: 'include',
+    headers,
   })
   toast.value = '設定已儲存！'
   setTimeout(() => toast.value = '', 2000)
