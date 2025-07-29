@@ -59,8 +59,13 @@
           x5-playsinline
           x5-video-player-type="h5"
           x5-video-player-fullscreen="true"
+          @loadedmetadata="onVideoLoaded"
+          @error="onVideoError"
+          @canplay="onVideoCanPlay"
         >
           <source :src="item.url" type="video/mp4" />
+          <source :src="item.url" type="video/webm" />
+          <source :src="item.url" type="video/ogg" />
           <track kind="captions" :src="`/subtitles/${item.publicId}.vtt`" srclang="zh" label="中文字幕" default />
           您的瀏覽器不支援影片播放
         </video>
@@ -274,6 +279,70 @@ function onImageLoaded(id: string) {
   if (el) animateIn(el)
 }
 
+// 影片載入處理函數
+function onVideoLoaded(event: Event) {
+  const video = event.target as HTMLVideoElement
+  console.log('[MasonryGrid] Video loaded:', video.src)
+  
+  // 手機端特殊處理
+  if (window.innerWidth < 768) {
+    // 確保影片在手機端正確顯示
+    video.style.display = 'block'
+    video.style.width = '100%'
+    video.style.height = 'auto'
+    
+    // 手機端自動播放設置
+    video.muted = true
+    video.playsInline = true
+  }
+  
+  // 觸發動畫
+  const container = video.closest('.masonry-item')
+  if (container) animateIn(container as HTMLElement)
+}
+
+function onVideoError(event: Event) {
+  const video = event.target as HTMLVideoElement
+  console.error('[MasonryGrid] Video error:', video.src, event)
+  
+  // 手機端錯誤處理
+  if (window.innerWidth < 768) {
+    // 標記錯誤狀態
+    video.setAttribute('data-error', 'true')
+    
+    // 嘗試重新載入
+    setTimeout(() => {
+      video.load()
+    }, 1000)
+    
+    // 如果還是失敗，顯示錯誤信息
+    setTimeout(() => {
+      if (video.error) {
+        video.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 200px; color: #c62828; font-size: 14px; text-align: center; padding: 20px;">
+            影片載入失敗<br>
+            <button onclick="this.parentElement.parentElement.load()" style="margin-top: 10px; padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; font-size: 12px;">
+              重新載入
+            </button>
+          </div>
+        `
+      }
+    }, 2000)
+  }
+}
+
+function onVideoCanPlay(event: Event) {
+  const video = event.target as HTMLVideoElement
+  console.log('[MasonryGrid] Video can play:', video.src)
+  
+  // 手機端準備播放
+  if (window.innerWidth < 768) {
+    // 確保影片可見
+    video.style.opacity = '1'
+    video.style.visibility = 'visible'
+  }
+}
+
 // 影片/360 掛載後觸發動畫
 watch(
   () => items.map(i => i.publicId + ':' + i.url).join(','),
@@ -329,6 +398,24 @@ onMounted(async () => {
   if (grid) {
     grid.style.perspective = '2000px'
   }
+  
+  // 手機端影片初始化
+  if (window.innerWidth < 768) {
+    const videos = document.querySelectorAll('.masonry-item video')
+    videos.forEach((video) => {
+      const videoElement = video as HTMLVideoElement
+      // 確保手機端影片設置
+      videoElement.muted = true
+      videoElement.playsInline = true
+      videoElement.preload = 'metadata'
+      
+      // 強制重新載入
+      if (videoElement.src) {
+        videoElement.load()
+      }
+    })
+  }
+  
   // 嚴格過濾 HTMLElement，並加上除錯 log
   const validCards = cardRefs.value.filter((card): card is HTMLElement => !!card && card instanceof HTMLElement)
   if (validCards.length !== cardRefs.value.length) {
@@ -514,6 +601,39 @@ function hasMore() {
     /* 確保控制列可見 */
     -webkit-media-controls: auto;
     -webkit-media-controls-panel: auto;
+    /* 確保影片可見 */
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    /* 手機端影片容器 */
+    background: #000;
+    border-radius: 4px;
+    /* 確保影片載入 */
+    object-fit: cover;
+    min-height: 200px;
+  }
+  
+  /* 手機端影片載入狀態 */
+  .masonry-item video:not([src]) {
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+  
+  /* 手機端影片錯誤狀態 */
+  .masonry-item video[data-error="true"] {
+    background: #ffebee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c62828;
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
   }
   
   /* 手機端 VIEW360 觸控優化 */
