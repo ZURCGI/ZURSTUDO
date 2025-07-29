@@ -5,6 +5,11 @@ export default defineNuxtConfig({
   // ── 相容性日期 ───────────────────────────────────────
   compatibilityDate: '2025-06-29',
 
+  // ── 目錄配置 ─────────────────────────────────────────
+  dir: {
+    public: 'public'
+  },
+
   // ── TypeScript 嚴格模式 ──────────────────────────────────
   typescript: { strict: true },
 
@@ -139,7 +144,6 @@ export default defineNuxtConfig({
     },
     // 靜態資源處理
     assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp'],
-    publicDir: 'public',
   },
 
   // ── 快取優化 ─────────────────────────────────────────
