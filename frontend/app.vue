@@ -17,11 +17,19 @@
     <ClientOnly>
       <Toast />
     </ClientOnly>
+    
+    <!-- 性能監控儀表板 (僅開發環境) -->
+    <ClientOnly>
+      <PerformanceDashboard v-if="isDevelopment" />
+    </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+
+// 檢查是否為開發環境
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 // 全域錯誤處理
 const handleGlobalError = (error: Error, errorInfo: any) => {

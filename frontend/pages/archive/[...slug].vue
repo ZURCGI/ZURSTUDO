@@ -1,90 +1,92 @@
 <template>
-  <!-- 媒體動畫容器 -->
-  <div
-    ref="mediaContainer"
-    class="relative w-full"
-    style="perspective: 1200px; min-height: 50vh;"
-    @touchstart="onTouchStart"
-    @touchend="onTouchEnd"
-  >
+  <div class="archive-page-container">
+    <!-- 媒體動畫容器 -->
     <div
-      v-if="media"
-      :key="media.publicId"
-      class="media-item-wrapper absolute inset-0"
+      ref="mediaContainer"
+      class="relative w-full"
+      style="perspective: 1200px; min-height: 50vh;"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
     >
-      <div class="media-item-wrapper flex items-center justify-center mt-16">
-        <div class="relative" style="display: inline-block;">
-          <!-- 上一頁按鈕（圖片上方左側，浮在圖片外） -->
-          <NuxtLink
-            v-if="prevId"
-            :to="`/archive/${prevId}`"
-            class="hidden md:flex absolute left-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
-            style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
-            aria-label="上一張"
-          >‹</NuxtLink>
-          <!-- 下一頁按鈕（圖片上方右側，浮在圖片外） -->
-          <NuxtLink
-            v-if="nextId"
-            :to="`/archive/${nextId}`"
-            class="hidden md:flex absolute right-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
-            style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
-            aria-label="下一張"
-          >›</NuxtLink>
-          <!-- 360° 全景 -->
-          <div v-if="media.type === 'view360'" class="block mx-auto relative" style="width:1000px; height:562px;">
-            <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
-            
-            <!-- 載入狀態 -->
-            <div v-if="!viewerInstance" class="view360-loading">
-              <div class="flex flex-col items-center gap-3 text-white">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                <span class="text-sm">載入 360° 全景中...</span>
+      <div
+        v-if="media"
+        :key="media.publicId"
+        class="media-item-wrapper absolute inset-0"
+      >
+        <div class="media-item-wrapper flex items-center justify-center mt-16">
+          <div class="relative" style="display: inline-block;">
+            <!-- 上一頁按鈕（圖片上方左側，浮在圖片外） -->
+            <NuxtLink
+              v-if="prevId"
+              :to="`/archive/${prevId}`"
+              class="hidden md:flex absolute left-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
+              aria-label="上一張"
+            >‹</NuxtLink>
+            <!-- 下一頁按鈕（圖片上方右側，浮在圖片外） -->
+            <NuxtLink
+              v-if="nextId"
+              :to="`/archive/${nextId}`"
+              class="hidden md:flex absolute right-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
+              aria-label="下一張"
+            >›</NuxtLink>
+            <!-- 360° 全景 -->
+            <div v-if="media.type === 'view360'" class="block mx-auto relative" style="width:1000px; height:562px;">
+              <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
+              
+              <!-- 載入狀態 -->
+              <div v-if="!viewerInstance" class="view360-loading">
+                <div class="flex flex-col items-center gap-3 text-white">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  <span class="text-sm">載入 360° 全景中...</span>
+                </div>
               </div>
             </div>
-          </div>
-          <!-- 圖片 -->
-          <div v-else-if="media.type === 'image'" class="relative w-fit mx-auto">
-            <DetailPageImage
-              :src="media.url"
-              :alt="media.description || 'ZUR Media'"
-              :width="1280"
-              :height="720"
-              class="block"
-              @loaded="onMediaReady"
-              style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
-            />
-            <!-- 上一頁/下一頁按鈕 ... -->
-          </div>
-          <!-- 影片 -->
-          <div v-else-if="media.type === 'video'" class="relative w-fit mx-auto">
-            <video
-              ref="videoPlayer"
-              preload="metadata"
-              loop
-              class="block"
-              @canplay="onMediaReady"
-              @mouseenter="playVideo"
-              @mouseleave="pauseVideo"
-              style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
-            >
-              <source :src="media.url" type="video/mp4" />
-              <track kind="captions" :src="`/subtitles/${publicId}.vtt`" srclang="zh" label="中文字幕" default />
-              您的瀏覽器不支援影片播放
-            </video>
-            <!-- 上一頁/下一頁按鈕 ... -->
+            <!-- 圖片 -->
+            <div v-else-if="media.type === 'image'" class="relative w-fit mx-auto">
+              <DetailPageImage
+                :src="media.url"
+                :alt="media.description || 'ZUR Media'"
+                :width="1280"
+                :height="720"
+                class="block"
+                @loaded="onMediaReady"
+                style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
+              />
+              <!-- 上一頁/下一頁按鈕 ... -->
+            </div>
+            <!-- 影片 -->
+            <div v-else-if="media.type === 'video'" class="relative w-fit mx-auto">
+              <video
+                ref="videoPlayer"
+                preload="metadata"
+                loop
+                class="block"
+                @canplay="onMediaReady"
+                @mouseenter="playVideo"
+                @mouseleave="pauseVideo"
+                style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
+              >
+                <source :src="media.url" type="video/mp4" />
+                <track kind="captions" :src="`/subtitles/${publicId}.vtt`" srclang="zh" label="中文字幕" default />
+                您的瀏覽器不支援影片播放
+              </video>
+              <!-- 上一頁/下一頁按鈕 ... -->
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <!-- 描述文字容器 -->
-  <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
-    <p v-if="media">{{ media.description }}</p>
-  </div>
-  <!-- 404 提示（只有完全載入完成且 media 為 null 才顯示） -->
-  <div v-if="itemsLoaded && !media && !hasMore" class="text-center text-gray-500">
-    <h1 class="text-2xl font-bold">404</h1>
-    找不到此媒體：<code>{{ publicId }}</code>
+    <!-- 描述文字容器 -->
+    <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
+      <p v-if="media">{{ media.description }}</p>
+    </div>
+    <!-- 404 提示（只有完全載入完成且 media 為 null 才顯示） -->
+    <div v-if="itemsLoaded && !media && !hasMore" class="text-center text-gray-500">
+      <h1 class="text-2xl font-bold">404</h1>
+      找不到此媒體：<code>{{ publicId }}</code>
+    </div>
   </div>
 </template>
 
@@ -303,18 +305,23 @@ function animateEntrance() {
     }
   }
   
-  // 文字動畫
+  // 文字動畫 - 添加更嚴格的檢查
   const text = description.querySelector('p');
-  if (text) {
+  if (text && text.innerText && text.innerText.trim()) {
     const chars = text.innerText.split('');
-    text.innerHTML = chars.map(c => `<span class=\"char\" style=\"display: inline-block;\">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
-    tl.from(text.querySelectorAll('.char'), {
-      yPercent: 100,
-      opacity: 0,
-      stagger: 0.02,
-      duration: 0.8,
-      ease: 'power3.out'
-    }, '-=1.0');
+    text.innerHTML = chars.map(c => `<span class="char" style="display: inline-block;">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
+    
+    // 確保字符元素存在且數量正確
+    const charElements = text.querySelectorAll('.char');
+    if (charElements && charElements.length > 0) {
+      tl.from(charElements, {
+        yPercent: 100,
+        opacity: 0,
+        stagger: 0.02,
+        duration: 0.8,
+        ease: 'power3.out'
+      }, '-=1.0');
+    }
   }
 }
 function onMediaReady() {

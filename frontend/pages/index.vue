@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRuntimeConfig } from '#app'
 import { gsap } from 'gsap'
@@ -254,17 +254,24 @@ watch(items, (newItems) => {
   if (newItems.length > 0 && page.value === 1 && !animationTriggered.value) {
     animationTriggered.value = true // 標記已觸發
     
-    // 確保 GSAP context 和時間軸已準備好
-    if (!ctx || !tl) {
-      console.warn('[Animation] GSAP context or timeline not ready, creating...');
-      initializeAnimation();
-    }
-    
-    // 確保時間軸不在活動狀態
-    if (tl && !tl.isActive()) {
-      console.log('[Animation] Triggering grid animation for', newItems.length, 'items');
-      tl.restart();
-    }
+    // 使用 nextTick 確保 DOM 已更新
+    nextTick(() => {
+      // 延遲初始化，確保所有組件都已載入
+      setTimeout(() => {
+        // 確保 GSAP context 和時間軸已準備好
+        if (!ctx || !tl) {
+          console.warn('[Animation] GSAP context or timeline not ready, creating...');
+          initializeAnimation();
+        }
+        
+        // 確保時間軸不在活動狀態且容器存在
+        if (tl && !tl.isActive() && gridContainer.value) {
+          console.log('[Animation] Triggering grid animation for', newItems.length, 'items');
+          // 重置時間軸並重新開始
+          tl.restart();
+        }
+      }, 100); // 添加100ms延遲確保DOM完全準備好
+    });
   }
 }, {
   // 關鍵：確保回調在 Vue DOM 更新後執行，完美替代 nextTick + setTimeout
@@ -276,6 +283,11 @@ function initializeAnimation() {
   if (!gridContainer.value) {
     console.warn('[Animation] Grid container not ready');
     return;
+  }
+  
+  // 清理現有的 context
+  if (ctx) {
+    ctx.revert();
   }
   
   // 創建 GSAP context，確保動畫在組件卸載時自動清理
