@@ -427,8 +427,8 @@ onUnmounted(() => {
 // View360 控制功能
 function resetView() {
   if (viewerInstance.value) {
-    viewerInstance.value.setZoomLevel(0);
-    viewerInstance.value.setPosition({ longitude: 0, latitude: 0 });
+    viewerInstance.value.zoom(0);
+    viewerInstance.value.rotate({ longitude: 0, latitude: 0 });
   }
 }
 
