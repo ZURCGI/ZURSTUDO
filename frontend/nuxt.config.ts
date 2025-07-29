@@ -296,7 +296,7 @@ export default defineNuxtConfig({
   // ── 全局 Runtime Config ─────────────────────────────────
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3000',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://zur-backend.onrender.com',
       cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
       siteUrl: 'https://zurcgi.com/',
     },
