@@ -51,9 +51,11 @@
           :ref="(el) => setCardRefs(el)"
           controls preload="metadata"
           class="w-full object-cover shadow"
-          style="pointer-events: none; display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
+          style="display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
           :aria-label="`影片: ${item.description || item.publicId}`"
           :aria-describedby="`desc-${item.publicId}`"
+          playsinline
+          webkit-playsinline
         >
           <source :src="item.url" type="video/mp4" />
           <track kind="captions" :src="`/subtitles/${item.publicId}.vtt`" srclang="zh" label="中文字幕" default />
@@ -66,7 +68,7 @@
           :ref="(el) => setCardRefs(el)"
           :id="`viewer-${item.publicId}`"
           class="w-full overflow-hidden shadow"
-          style="pointer-events: auto; display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
+          style="display: block; aspect-ratio: 16/9; margin: 0; padding: 0;"
           :aria-label="`360度全景: ${item.description || item.publicId}`"
           :aria-describedby="`desc-${item.publicId}`"
           role="img"
@@ -159,6 +161,18 @@ watch(
               defaultPitch: 0.0,  // 水平
               moveSpeed: 1.5,  // 移動速度
               zoomSpeed: 1,    // 縮放速度
+              // 手機端優化
+              touchmoveTwoFingers: true,
+              mousewheel: false,
+              mousemove: true,
+              // 觸控優化
+              touchPan: true,
+              touchZoom: true,
+              // 性能優化
+              renderParameters: {
+                antialias: false,
+                alpha: false
+              }
             }))
           } catch (error) {
             console.error('Failed to load Photo Sphere Viewer:', error)

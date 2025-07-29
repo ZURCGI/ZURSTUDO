@@ -8,7 +8,7 @@
     :height="props.height"
     @load="onImageLoad"
     @error="onImageError"
-    style="width: 100%; height: auto; display: block;"
+    class="w-full h-auto block"
   />
 </template>
 
