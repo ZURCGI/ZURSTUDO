@@ -14,7 +14,7 @@
           <!-- Logo -->
           <NuxtLink to="/" class="flex items-center h-10">
             <img
-              src="/ZURLOGO.png"
+              src="~/assets/ZURLOGO.png"
               alt="ZUR Studio"
               class="h-8 w-auto"
             />

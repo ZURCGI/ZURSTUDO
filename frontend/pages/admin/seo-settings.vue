@@ -118,7 +118,7 @@
           Open Graph 預覽（LINE/IG 分享卡）
         </h3>
         <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 flex items-center max-w-xl">
-          <img :src="form.ogImage || '/ZURLOGO.png'" alt="OG Image" class="w-24 h-24 object-cover rounded-lg mr-4 border border-gray-200" />
+          <img :src="form.ogImage || '~/assets/ZURLOGO.png'" alt="OG Image" class="w-24 h-24 object-cover rounded-lg mr-4 border border-gray-200" />
           <div>
             <div class="text-gray-900 font-bold text-lg mb-1">{{ ogTitle }}</div>
             <div class="text-gray-700 text-base mb-1">{{ ogDescription }}</div>

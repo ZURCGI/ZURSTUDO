@@ -115,6 +115,7 @@ export default defineNuxtConfig({
     // 優化 build 配置
     build: {
       rollupOptions: {
+        external: [],
         output: {
           manualChunks: {
             // 核心框架
