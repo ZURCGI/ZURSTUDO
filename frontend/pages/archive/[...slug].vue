@@ -73,10 +73,16 @@
   <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
     <p v-if="media">{{ media.description }}</p>
   </div>
-  <!-- 404 提示（只有 items 載入完成且 media 為 null 才顯示） -->
-  <div v-if="itemsLoaded && !media" class="text-center text-gray-500">
+  <!-- 404 提示（只有完全載入完成且 media 為 null 才顯示） -->
+  <div v-if="itemsLoaded && !media && !hasMore" class="text-center text-gray-500">
     <h1 class="text-2xl font-bold">404</h1>
     找不到此媒體：<code>{{ publicId }}</code>
+  </div>
+  
+  <!-- 載入中提示 -->
+  <div v-if="loading && !media" class="text-center text-gray-500 py-8">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+    <p>載入中...</p>
   </div>
 </template>
 
@@ -131,11 +137,17 @@ async function loadMore() {
     items.value = [...items.value, ...filtered]
     hasMore.value = res.pagination?.hasMore ?? (filtered.length === limit)
     page.value += 1
+    
+    // 檢查是否找到了目標媒體
+    const foundMedia = items.value.find(i => i.publicId === publicId)
+    if (foundMedia || !hasMore.value) {
+      itemsLoaded.value = true
+    }
   } catch (e) {
     hasMore.value = false
+    itemsLoaded.value = true
   }
   loading.value = false
-  itemsLoaded.value = true
 }
 
 // 單筆媒體
