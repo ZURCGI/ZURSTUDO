@@ -498,13 +498,24 @@ function onCardClick(e) {
   // 手機端特殊處理
   if (isMobile.value) {
     // 添加安全檢查
-    if (!items.value || !e.currentTarget || !e.currentTarget.dataset || !e.currentTarget.dataset.id) {
-      console.warn('[MasonryGrid] Mobile click: missing required data')
+    if (!items.value || !e.currentTarget || !e.currentTarget.dataset) {
+      console.warn('[MasonryGrid] Mobile click: missing currentTarget or dataset')
       return
     }
     
-    const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
-    if (item && item.type === 'video') {
+    const dataId = e.currentTarget.dataset.id
+    if (!dataId) {
+      console.warn('[MasonryGrid] Mobile click: missing data-id')
+      return
+    }
+    
+    const item = items.value.find(item => item.publicId === dataId)
+    if (!item) {
+      console.warn('[MasonryGrid] Mobile click: item not found for data-id:', dataId)
+      return
+    }
+    
+    if (item.type === 'video') {
       // 只有影片在手機端不跳轉，只顯示點擊效果
       e.preventDefault()
       e.stopPropagation()
