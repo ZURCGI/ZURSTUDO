@@ -219,7 +219,7 @@ watch(media, async (newMedia) => {
             autorotateLat: 0,
             autorotateSpeed: '2rpm',
             mousewheel: true,
-            touchmoveTwoFingers: false,
+            touchmoveTwoFingers: true,
             size: {
               width: viewerContainer.value.offsetWidth,
               height: viewerContainer.value.offsetHeight
