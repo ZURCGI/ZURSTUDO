@@ -14,7 +14,7 @@ export class ArchiveController {
     @Res() res: Response,
   ) {
     // 取得 URL 並重定向
-    const url = cloudinary.url(`${folder}/${publicId}`);
+    const url = cloudinary.url(`${folder}/${publicId}`, { secure: true });
     return res.redirect(url);
   }
 }

@@ -19,11 +19,6 @@ export interface CloudinaryApiResponse {
   rate_limit_remaining: number;
 }
 
-export interface CloudinaryTagsResponse {
-  tags: string[];
-  [key: string]: any;
-}
-
 @Injectable()
 export class CloudinaryService {
   private readonly logger = new Logger(CloudinaryService.name);
@@ -90,7 +85,7 @@ export class CloudinaryService {
     );
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        { folder, resource_type: 'image' },
+        { folder },
         (error, result) => {
           if (error) {
             this.logger.error(`uploadBuffer failed: ${error.message}`);
@@ -104,12 +99,12 @@ export class CloudinaryService {
           resolve(result);
         },
       );
-      Readable.from(buffer).pipe(uploadStream);
+      uploadStream.end(buffer);
     });
   }
 
   /**
-   * 上傳大文件到 Cloudinary (video)，支援分片上傳 - 保留作為備用
+   * 上傳 Buffer 到 Cloudinary (video) - 保留作為備用
    */
   uploadVideoBuffer(
     buffer: Buffer,
@@ -121,44 +116,22 @@ export class CloudinaryService {
     );
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: 'video',
-          folder,
-          public_id: publicId,
-          chunk_size: 6000000,
-        },
+        { folder, resource_type: 'video', public_id: publicId },
         (error, result) => {
           if (error) {
             this.logger.error(`uploadVideoBuffer failed: ${error.message}`);
             return reject(new BadRequestException(error.message));
           }
           if (!result) {
-            this.logger.error(
-              'uploadVideoBuffer failed: No upload result received',
-            );
+            this.logger.error('uploadVideoBuffer failed: No upload result received');
             return reject(new BadRequestException('No upload result received'));
           }
           this.logger.log(`uploadVideoBuffer success: ${result.public_id}`);
           resolve(result);
         },
       );
-      Readable.from(buffer).pipe(uploadStream);
+      uploadStream.end(buffer);
     });
-  }
-
-  /**
-   * 從 Cloudinary 刪除檔案 (已棄用，請使用 deleteFromCloudinary)
-   * @deprecated 請使用 deleteFromCloudinary 方法
-   */
-  async destroy(
-    publicId: string,
-    resourceType: 'image' | 'video',
-  ): Promise<void> {
-    this.logger.log(
-      `[Cloudinary] destroy called (deprecated), publicId: ${publicId}, resourceType: ${resourceType}`,
-    );
-    // 直接呼叫 deleteFromCloudinary 以保持一致性
-    return this.deleteFromCloudinary(publicId, resourceType);
   }
 
   /**
@@ -206,250 +179,162 @@ export class CloudinaryService {
   }
 
   /**
-   * 搜尋 Cloudinary 檔案
+   * 搜尋 Cloudinary 資源
    */
-  async searchCloudinary(
-    expression: string,
-    options?: {
-      max_results?: number;
-      next_cursor?: string;
-    },
-  ): Promise<CloudinaryApiResponse> {
-    this.logger.log(`searchCloudinary called, expression: ${expression}`);
-
+  async searchResources(query: string, folder?: string): Promise<any> {
+    this.logger.log(`searchResources called, query: ${query}, folder: ${folder}`);
     try {
       const searchResult = (await cloudinary.search
-        .expression(expression)
-        .max_results(options?.max_results || 100)
-        .next_cursor(options?.next_cursor)
-        .execute()) as CloudinaryApiResponse;
+        .expression(query)
+        .sort_by('created_at', 'desc')
+        .max_results(50)
+        .execute()) as any;
 
-      this.logger.log(
-        `searchCloudinary result: ${searchResult.resources.length} items`,
-      );
+      this.logger.log(`searchResources success: ${searchResult.resources?.length || 0} results`);
       return searchResult;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`searchCloudinary failed: ${errorMessage}`);
-      throw new BadRequestException(
-        `Failed to search Cloudinary: ${errorMessage}`,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`searchResources failed: ${errorMessage}`);
+      throw new BadRequestException(`Search failed: ${errorMessage}`);
     }
   }
 
   /**
-   * 從 Cloudinary 刪除檔案
+   * 批次刪除資源
    */
-  async deleteFromCloudinary(
-    publicId: string,
-    resourceType: 'image' | 'video' | 'view360',
-  ): Promise<void> {
-    this.logger.log(
-      `[CloudinaryService] deleteFromCloudinary called: publicId=${publicId}, resourceType=${resourceType}`,
-    );
+  async batchDeleteResources(publicIds: string[], resourceType: 'image' | 'video' = 'image'): Promise<any[]> {
+    this.logger.log(`batchDeleteResources called, count: ${publicIds.length}, type: ${resourceType}`);
+    const results: any[] = [];
 
-    // 驗證參數
-    if (!publicId) {
-      throw new BadRequestException('publicId 不能為空');
-    }
-
-    if (
-      !resourceType ||
-      !['image', 'video', 'view360'].includes(resourceType)
-    ) {
-      throw new BadRequestException(`無效的 resourceType: ${resourceType}`);
-    }
-
-    // view360 實際上是 image 類型
-    const actualResourceType =
-      resourceType === 'view360' ? 'image' : resourceType;
-
-    this.logger.log(
-      `[CloudinaryService] 準備刪除: publicId=${publicId}, originalType=${resourceType}, actualType=${actualResourceType}`,
-    );
-
-    return new Promise((resolve, reject) => {
-      cloudinary.uploader.destroy(
-        publicId,
-        { resource_type: actualResourceType },
-        (error, result) => {
-          if (error) {
-            this.logger.error(
-              `[CloudinaryService] deleteFromCloudinary failed: publicId=${publicId}, error=${error.message}`,
-            );
-            return reject(
-              new BadRequestException(`Delete failed: ${error.message}`),
-            );
-          }
-
-          this.logger.log(
-            `[CloudinaryService] deleteFromCloudinary success: publicId=${publicId}, result=${JSON.stringify(result)}`,
+    for (const publicId of publicIds) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          cloudinary.uploader.destroy(
+            publicId,
+            { resource_type: resourceType },
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            },
           );
-          resolve();
-        },
-      );
-    });
+        });
+        results.push({ publicId, success: true, result });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        this.logger.error(`batchDeleteResources failed for ${publicId}: ${errorMessage}`);
+        results.push({ publicId, success: false, error: errorMessage });
+      }
+    }
+
+    this.logger.log(`batchDeleteResources completed: ${results.filter(r => r.success).length}/${publicIds.length} successful`);
+    return results;
   }
 
   /**
-   * 移動檔案到指定資料夾
+   * 重新命名資源
    */
-  async moveToFolder(
-    publicId: string,
-    folder: string,
-    resourceType: 'image' | 'video' | 'view360',
-  ): Promise<void> {
-    this.logger.log(
-      `moveToFolder called: ${publicId} -> ${folder}, type: ${resourceType}`,
-    );
-
-    // view360 實際上是 image 類型
-    const actualResourceType =
-      resourceType === 'view360' ? 'image' : resourceType;
-
+  async renameResource(fromPublicId: string, toPublicId: string, resourceType: 'image' | 'video' = 'image'): Promise<any> {
+    this.logger.log(`renameResource called, from: ${fromPublicId}, to: ${toPublicId}, type: ${resourceType}`);
     return new Promise((resolve, reject) => {
       cloudinary.uploader.rename(
-        publicId,
-        `${folder}/${publicId.split('/').pop()}`,
-        { resource_type: actualResourceType },
+        fromPublicId,
+        toPublicId,
+        { resource_type: resourceType },
         (error, result) => {
           if (error) {
-            this.logger.error(`moveToFolder failed: ${error.message}`);
-            return reject(
-              new BadRequestException(`Move failed: ${error.message}`),
-            );
+            this.logger.error(`renameResource failed: ${error.message}`);
+            return reject(new BadRequestException(error.message));
           }
-          this.logger.log(`moveToFolder success: ${publicId} -> ${folder}`);
-          resolve();
+          this.logger.log(`renameResource success: ${fromPublicId} -> ${toPublicId}`);
+          resolve(result);
         },
       );
     });
   }
 
   /**
-   * 為檔案添加標籤
+   * 添加標籤
    */
-  async addTags(
-    publicId: string,
-    tags: string[],
-    resourceType: 'image' | 'video' | 'view360',
-  ): Promise<void> {
-    this.logger.log(
-      `addTags called: ${publicId}, tags: ${tags.join(', ')}, type: ${resourceType}`,
-    );
-
-    // view360 實際上是 image 類型
-    const actualResourceType =
-      resourceType === 'view360' ? 'image' : resourceType;
-
+  async addTag(publicId: string, tag: string, resourceType: 'image' | 'video' = 'image'): Promise<any> {
+    this.logger.log(`addTag called, publicId: ${publicId}, tag: ${tag}, type: ${resourceType}`);
     return new Promise((resolve, reject) => {
       cloudinary.uploader.add_tag(
-        tags.join(','),
-        [publicId],
-        { resource_type: actualResourceType },
+        tag,
+        publicId,
+        { resource_type: resourceType },
         (error, result) => {
           if (error) {
-            this.logger.error(`addTags failed: ${error.message}`);
-            return reject(
-              new BadRequestException(`Add tags failed: ${error.message}`),
-            );
+            this.logger.error(`addTag failed: ${error.message}`);
+            return reject(new BadRequestException(error.message));
           }
-          this.logger.log(`addTags success: ${publicId}`);
-          resolve();
+          this.logger.log(`addTag success: ${publicId} -> ${tag}`);
+          resolve(result);
         },
       );
     });
   }
 
   /**
-   * 獲取所有標籤
+   * 取得所有標籤
    */
-  async getAllTags(): Promise<{ tags: string[] }> {
+  async getAllTags(): Promise<string[]> {
     this.logger.log('getAllTags called');
-
     try {
       const result = (await cloudinary.api.tags({
         max_results: 500,
-      })) as CloudinaryTagsResponse;
+      })) as any;
 
-      this.logger.log(`getAllTags result: ${result.tags.length} tags`);
-      return {
-        tags: result.tags || [],
-      };
+      this.logger.log(`getAllTags success: ${result.tags?.length || 0} tags`);
+      return result.tags || [];
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`getAllTags failed: ${errorMessage}`);
       throw new BadRequestException(`Failed to get tags: ${errorMessage}`);
     }
   }
 
   /**
-   * 更新檔案標籤
+   * 替換標籤
    */
-  async updateTags(
-    publicId: string,
-    tags: string[],
-    resourceType: 'image' | 'video' | 'view360',
-  ): Promise<void> {
-    this.logger.log(
-      `updateTags called: ${publicId}, tags: ${tags.join(', ')}, type: ${resourceType}`,
-    );
-
-    // view360 實際上是 image 類型
-    const actualResourceType =
-      resourceType === 'view360' ? 'image' : resourceType;
-
+  async replaceTag(publicId: string, oldTag: string, newTag: string, resourceType: 'image' | 'video' = 'image'): Promise<any> {
+    this.logger.log(`replaceTag called, publicId: ${publicId}, oldTag: ${oldTag}, newTag: ${newTag}, type: ${resourceType}`);
     return new Promise((resolve, reject) => {
       cloudinary.uploader.replace_tag(
-        tags.join(','),
-        [publicId],
-        { resource_type: actualResourceType },
+        newTag,
+        publicId,
+        { resource_type: resourceType, tag: oldTag },
         (error, result) => {
           if (error) {
-            this.logger.error(`updateTags failed: ${error.message}`);
-            return reject(
-              new BadRequestException(`Update tags failed: ${error.message}`),
-            );
+            this.logger.error(`replaceTag failed: ${error.message}`);
+            return reject(new BadRequestException(error.message));
           }
-          this.logger.log(`updateTags success: ${publicId}`);
-          resolve();
+          this.logger.log(`replaceTag success: ${publicId} -> ${oldTag} -> ${newTag}`);
+          resolve(result);
         },
       );
     });
   }
 
   /**
-   * 移除檔案標籤
+   * 移除標籤
    */
-  async removeTags(
-    publicId: string,
-    tags: string[],
-    resourceType: 'image' | 'video' | 'view360',
-  ): Promise<void> {
-    this.logger.log(
-      `removeTags called: ${publicId}, tags: ${tags.join(', ')}, type: ${resourceType}`,
-    );
-
-    // view360 實際上是 image 類型
-    const actualResourceType =
-      resourceType === 'view360' ? 'image' : resourceType;
-
+  async removeTag(publicId: string, tag: string, resourceType: 'image' | 'video' = 'image'): Promise<any> {
+    this.logger.log(`removeTag called, publicId: ${publicId}, tag: ${tag}, type: ${resourceType}`);
     return new Promise((resolve, reject) => {
       cloudinary.uploader.remove_tag(
-        tags.join(','),
-        [publicId],
-        { resource_type: actualResourceType },
+        tag,
+        publicId,
+        { resource_type: resourceType },
         (error, result) => {
           if (error) {
-            this.logger.error(`removeTags failed: ${error.message}`);
-            return reject(
-              new BadRequestException(`Remove tags failed: ${error.message}`),
-            );
+            this.logger.error(`removeTag failed: ${error.message}`);
+            return reject(new BadRequestException(error.message));
           }
-          this.logger.log(`removeTags success: ${publicId}`);
-          resolve();
+          this.logger.log(`removeTag success: ${publicId} -> ${tag}`);
+          resolve(result);
         },
       );
     });

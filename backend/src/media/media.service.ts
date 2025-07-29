@@ -704,10 +704,18 @@ export class MediaService {
 
     try {
       do {
-        const res = await cloudinary.v2.api.resources({
-          resource_type: 'auto',
-          max_results: 100,
-          next_cursor: nextCursor,
+        const res = await new Promise<any>((resolve, reject) => {
+          cloudinary.api.resources({
+            resource_type: 'auto',
+            max_results: 100,
+            next_cursor: nextCursor,
+          }, (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          });
         });
 
         this.logger.log(
@@ -792,11 +800,8 @@ export class MediaService {
     );
 
     try {
-      const searchResult = await this.cloudinaryService.searchCloudinary(
+      const searchResult = await this.cloudinaryService.searchResources(
         expression,
-        {
-          max_results: options?.max_results || 100,
-        },
       );
 
       this.logger.log(`Search result: ${searchResult.resources.length} items`);
@@ -866,14 +871,14 @@ export class MediaService {
     this.logger.log('syncWithCloudinary started');
 
     try {
-      const cloudinaryFiles =
-        await this.cloudinaryService.listAllFromCloudinary();
-      this.logger.log('Cloudinary files count:', cloudinaryFiles.length);
+      // 使用新的 getResources 方法替代已移除的 listAllFromCloudinary
+      const cloudinaryFiles = await this.cloudinaryService.getResources('', 500);
+      this.logger.log('Cloudinary files count:', cloudinaryFiles.resources.length);
 
-      const images = cloudinaryFiles.filter(
+      const images = cloudinaryFiles.resources.filter(
         (file) => file.resource_type === 'image',
       );
-      const videos = cloudinaryFiles.filter(
+      const videos = cloudinaryFiles.resources.filter(
         (file) => file.resource_type === 'video',
       );
 
@@ -921,7 +926,7 @@ export class MediaService {
       }
 
       return {
-        cloudinaryTotal: cloudinaryFiles.length,
+        cloudinaryTotal: cloudinaryFiles.resources.length,
         cloudinaryImages: images.length,
         cloudinaryVideos: videos.length,
         dbImages: dbImages.length,
