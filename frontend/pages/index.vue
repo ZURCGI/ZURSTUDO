@@ -118,16 +118,14 @@ async function loadMedia(pageNum = 1) {
   }
   
   try {
-    console.log('[Index] Loading media from:', `${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`);
-    
-    const result = await $fetch(`${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
-    
-    console.log('[Index] Media loaded:', result);
+    const result = await errorHandler.withRetry(
+      () => $fetch(`${apiBase}/media/list?page=${pageNum}&limit=${pageSize}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
+    )
     
     const newItems = result.items || []
     
@@ -142,7 +140,6 @@ async function loadMedia(pageNum = 1) {
     page.value = pageNum
     
   } catch (err: any) {
-    console.error('[Index] Failed to load media:', err);
     error.value = true
     errorMessage.value = err.message || '載入失敗，請檢查網路連線'
   } finally {
