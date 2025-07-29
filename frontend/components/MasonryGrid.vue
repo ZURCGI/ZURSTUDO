@@ -44,9 +44,9 @@
           :aria-describedby="`desc-${item.publicId}`"
         />
 
-        <!-- 視頻 -->
+        <!-- 視頻 - 手機端隱藏 -->
         <video
-          v-else-if="item.type === 'video'"
+          v-else-if="item.type === 'video' && !isMobile"
           :ref="(el) => setCardRefs(el)"
           controls 
           preload="metadata"
@@ -84,9 +84,9 @@
           </div>
         </video>
 
-        <!-- 360° 全景 -->
+        <!-- 360° 全景 - 手機端隱藏 -->
         <div
-          v-else-if="item.type === 'view360'"
+          v-else-if="item.type === 'view360' && !isMobile"
           :ref="(el) => setCardRefs(el)"
           :id="`viewer-${item.publicId}`"
           class="w-full overflow-hidden shadow"
@@ -132,6 +132,32 @@
             >
               全螢幕
             </button>
+          </div>
+        </div>
+
+        <!-- 手機端影片提示 -->
+        <div
+          v-else-if="item.type === 'video' && isMobile"
+          class="w-full bg-gray-100 rounded-lg shadow flex items-center justify-center"
+          style="aspect-ratio: 16/9; min-height: 200px;"
+        >
+          <div class="text-center text-gray-500">
+            <div class="text-4xl mb-2">🎬</div>
+            <div class="text-sm">影片內容</div>
+            <div class="text-xs mt-1">請使用桌面版查看</div>
+          </div>
+        </div>
+
+        <!-- 手機端 VIEW360 提示 -->
+        <div
+          v-else-if="item.type === 'view360' && isMobile"
+          class="w-full bg-gray-100 rounded-lg shadow flex items-center justify-center"
+          style="aspect-ratio: 16/9; min-height: 200px;"
+        >
+          <div class="text-center text-gray-500">
+            <div class="text-4xl mb-2">🌐</div>
+            <div class="text-sm">360° 全景</div>
+            <div class="text-xs mt-1">請使用桌面版查看</div>
           </div>
         </div>
 
@@ -521,6 +547,25 @@ onBeforeUpdate(() => {
 const clickedThumbnailState = useState('clickedThumbnail')
 
 function onCardClick(e) {
+  // 手機端特殊處理
+  if (isMobile.value) {
+    const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
+    if (item && (item.type === 'video' || item.type === 'view360')) {
+      // 影片和 VIEW360 在手機端不跳轉，只顯示點擊效果
+      e.preventDefault()
+      e.stopPropagation()
+      
+      // 視覺反饋
+      const card = e.currentTarget
+      card.style.transform = 'scale(0.98)'
+      setTimeout(() => {
+        card.style.transform = 'scale(1)'
+      }, 150)
+      
+      return
+    }
+  }
+  
   clickedThumbnailState.value = e.currentTarget
 }
 
@@ -791,7 +836,16 @@ function showPlayButton(video: HTMLVideoElement) {
 }
 
 function getItemLink(item: { type: string; url: string; publicId: string; description?: string }) {
-  // 所有項目都跳轉到詳細頁
+  // 手機端：只有圖片跳轉到詳細頁
+  if (isMobile.value) {
+    if (item.type === 'image') {
+      return `/archive/${item.publicId}`
+    }
+    // 影片和 VIEW360 在手機端不跳轉
+    return '#'
+  }
+  
+  // 桌面端：所有項目都跳轉到詳細頁
   return `/archive/${item.publicId}`
 }
 </script>
@@ -1080,6 +1134,27 @@ function getItemLink(item: { type: string; url: string; publicId: string; descri
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+  }
+  
+  /* 手機端提示卡片樣式 */
+  .masonry-item[data-type="video"] .bg-gray-100,
+  .masonry-item[data-type="view360"] .bg-gray-100 {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border: 1px solid #d1d5db;
+    transition: all 0.2s ease;
+  }
+  
+  .masonry-item[data-type="video"]:hover .bg-gray-100,
+  .masonry-item[data-type="view360"]:hover .bg-gray-100 {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    transform: scale(1.02);
+  }
+  
+  /* 手機端提示卡片點擊效果 */
+  .masonry-item[data-type="video"]:active .bg-gray-100,
+  .masonry-item[data-type="view360"]:active .bg-gray-100 {
+    transform: scale(0.98);
+    transition: transform 0.15s ease;
   }
   
   /* 手機端圖片項目樣式 */
