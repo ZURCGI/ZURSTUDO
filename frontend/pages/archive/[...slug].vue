@@ -216,8 +216,6 @@ watch(media, async (newMedia) => {
             defaultZoomLvl: 0,
             moveSpeed: 1.5,
             zoomSpeed: 1,
-            autorotateLat: 0,
-            autorotateSpeed: '2rpm',
             mousewheel: true,
             touchmoveTwoFingers: true,
             size: {

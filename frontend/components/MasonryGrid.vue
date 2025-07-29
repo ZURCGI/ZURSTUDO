@@ -246,14 +246,10 @@ watch(
                 mousemove: false,
                 // 增強觸控響應
                 touchmoveTwoFingers: true,
-                // 防止手機端意外縮放
-                pinchToZoom: true,
                 // 手機端容器設置
                 containerClass: 'mobile-viewer',
                 // 防止手機端跳動
                 defaultZoomLvl: 0,
-                minZoomLvl: 0,
-                maxZoomLvl: 2,
                 // 防止滾動衝突
                 preventScroll: true,
                 // 手機端控制優化
@@ -497,11 +493,8 @@ const clickedThumbnailState = useState('clickedThumbnail')
 function onCardClick(e) {
   // 手機端特殊處理
   if (isMobile.value) {
-    // 找到包含 data-id 的元素（可能是事件目標或其父元素）
-    let targetElement = e.currentTarget
-    while (targetElement && !targetElement.dataset?.id) {
-      targetElement = targetElement.parentElement
-    }
+    // 直接從 currentTarget 獲取 data-id，因為 NuxtLink 本身就有 data-id 屬性
+    const targetElement = e.currentTarget
     
     // 添加安全檢查
     if (!items.value || !targetElement || !targetElement.dataset) {
