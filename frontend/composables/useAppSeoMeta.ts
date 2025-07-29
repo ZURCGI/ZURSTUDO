@@ -43,8 +43,16 @@ export function useAppSeoMeta(options: SeoOptions) {
   onMounted(async () => {
     // 取得全站 SEO 設定
     try {
+      // 檢查是否有認證 token
+      const { token } = useAuth()
+      const headers: Record<string, string> = {}
+      
+      if (token.value) {
+        headers['Authorization'] = `Bearer ${token.value}`
+      }
+      
       siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
-        credentials: 'include',
+        headers,
         // 添加錯誤處理，避免 401 錯誤導致重複請求
         onResponseError: (error) => {
           if (error.response?.status === 401) {
