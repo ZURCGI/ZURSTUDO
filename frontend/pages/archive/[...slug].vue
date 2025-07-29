@@ -335,13 +335,31 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 onMounted(async () => {
-  loadMore() // 初始化先載入第一頁
+  // 先載入第一頁
+  await loadMore()
+  
+  // 如果找不到目標媒體，繼續載入更多頁面直到找到
+  let attempts = 0
+  const maxAttempts = 10 // 最多嘗試 10 頁
+  
+  while (!media.value && attempts < maxAttempts && hasMore.value) {
+    console.log(`[Archive] Attempt ${attempts + 1}: Loading more to find media ${publicId}`)
+    await loadMore()
+    attempts++
+  }
+  
+  if (!media.value) {
+    console.error(`[Archive] Could not find media with publicId: ${publicId}`)
+  }
+  
+  // 設置無限滾動觀察器
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) loadMore()
   })
   await nextTick(() => {
     if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
   })
+  
   window.addEventListener('keydown', handleKeydown)
 })
 
