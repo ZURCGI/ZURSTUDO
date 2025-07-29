@@ -160,7 +160,7 @@ export default defineNuxtConfig({
         { name: 'robots', content: 'index, follow' },
         {
           'http-equiv': 'Content-Security-Policy',
-          content: `default-src 'self'; img-src 'self' https://res.cloudinary.com data: blob:; media-src 'self' https://res.cloudinary.com data: blob:; connect-src 'self' https://zur-backend.onrender.com https://res.cloudinary.com https://api.cloudinary.com https://api.iconify.design data: blob:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-src https://www.instagram.com;`
+          content: `default-src 'self'; img-src 'self' https://res.cloudinary.com data: blob:; media-src 'self' https://res.cloudinary.com data: blob:; connect-src 'self' ${process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com'} https://res.cloudinary.com https://api.cloudinary.com https://api.iconify.design data: blob:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-src https://www.instagram.com;`
         },
         // GEO
         { name: 'geo.region', content: 'TW-TPE' },
@@ -297,7 +297,7 @@ export default defineNuxtConfig({
   // ── 全局 Runtime Config ─────────────────────────────────
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://zur-backend.onrender.com',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com'),
       cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
       siteUrl: 'https://zurcgi.com/',
     },
