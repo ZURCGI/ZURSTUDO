@@ -61,6 +61,7 @@ export const useAuth = () => {
         baseURL: config.public.apiBase,
         method: 'POST',
         body: { username, password },
+        credentials: 'include', // 添加這行來接收 httpOnly cookie
       });
 
       if (result.access_token) {
