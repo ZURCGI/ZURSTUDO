@@ -192,12 +192,18 @@ export const useErrorHandler = (options: ErrorOptions = {}) => {
     retryCount.value = 0
   }
 
+  const getLatestError = () => errors.value[errors.value.length - 1] || null
+  const hasErrors = () => errors.value.length > 0
+
   return {
     errors: readonly(errors),
     isRetrying: readonly(isRetrying),
     retryCount: readonly(retryCount),
     withRetry,
     clearErrors,
-    categorizeError
+    categorizeError,
+    getLatestError,
+    hasErrors
   }
+} 
 } 

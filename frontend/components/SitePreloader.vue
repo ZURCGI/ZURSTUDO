@@ -21,16 +21,24 @@ onMounted(() => {
     ease: 'power2.out',
     onComplete: () => {
       // 載入完成後，播放退場動畫
-      gsap.to('.preloader', {
-        opacity: 0,
-        pointerEvents: 'none',
-        duration: 0.8,
-        onComplete: () => {
-          isLoading.value = false
-          show.value = false // 徹底移除
-          emit('loaded')
-        }
-      })
+      const preloaderEl = document.querySelector('.preloader')
+      if (preloaderEl) {
+        gsap.to(preloaderEl, {
+          opacity: 0,
+          pointerEvents: 'none',
+          duration: 0.8,
+          onComplete: () => {
+            isLoading.value = false
+            show.value = false // 徹底移除
+            emit('loaded')
+          }
+        })
+      } else {
+        // 如果元素不存在，直接完成
+        isLoading.value = false
+        show.value = false
+        emit('loaded')
+      }
     }
   })
 })
