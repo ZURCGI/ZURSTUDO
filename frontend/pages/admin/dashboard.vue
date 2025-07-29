@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, shallowRef, watch } from 'vue'
+import { onMounted, ref, shallowRef, watch, onUnmounted } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRuntimeConfig } from '#app'
 import VisitorMap from '~/components/VisitorMap.vue'
@@ -146,9 +146,12 @@ const trendChart = shallowRef<Chart | null>(null)
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 
 const renderTrendChart = () => {
-  if (trendChart.value) {
+  // 安全地銷毀現有圖表
+  if (trendChart.value && typeof trendChart.value.destroy === 'function') {
     trendChart.value.destroy()
+    trendChart.value = null
   }
+  
   if (chartCanvas.value && stats.value.visitTrend.length > 0) {
     const ctx = chartCanvas.value.getContext('2d')
     if (ctx) {
@@ -224,6 +227,14 @@ onMounted(async () => {
 watch(stats, () => {
   renderTrendChart()
 }, { deep: true })
+
+onUnmounted(() => {
+  // 組件卸載時清理圖表
+  if (trendChart.value && typeof trendChart.value.destroy === 'function') {
+    trendChart.value.destroy()
+    trendChart.value = null
+  }
+})
 
 </script>
 
