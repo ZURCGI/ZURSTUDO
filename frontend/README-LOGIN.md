@@ -5,49 +5,33 @@
 ### 1. 後端服務狀態
 ✅ 後端服務正在運行 (http://localhost:3000)
 ✅ API 端點正常響應
-❌ 登入憑證問題
+✅ 登入憑證已確認
 
-### 2. API 測試結果
+### 2. 登入憑證
 ```bash
 # 測試登入端點
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin"}'
+  -d '{"username":"admin","password":"[請查看後端測試文件或環境變數]"}'
 ```
 
 ### 3. 預期響應
-- **成功**: `{"access_token": "..."}`
+- **成功**: `{"success": true, "access_token": "..."}`
 - **失敗**: `{"statusCode": 401, "message": "使用者或密碼錯誤"}`
 
 ## 解決方案
 
-### 方案 1: 檢查後端用戶數據庫
-1. 確認後端數據庫中有用戶記錄
-2. 檢查用戶名和密碼是否正確
-3. 確認密碼是否已正確加密
+### ✅ 已確認的登入憑證
+- **用戶名**: `admin`
+- **密碼**: 請查看後端測試文件或環境變數
 
-### 方案 2: 創建測試用戶
-如果後端支持用戶註冊，可以創建測試用戶：
-
-```bash
-# 註冊新用戶（如果後端支持）
-curl -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-```
-
-### 方案 3: 檢查環境變數
-確保後端有正確的環境變數：
-- 數據庫連接
-- JWT 密鑰
-- 用戶認證配置
-
-## 前端修復
+### 前端修復
 
 已修復前端錯誤處理：
 - ✅ 添加了 401 錯誤的專門處理
 - ✅ 改善了錯誤訊息顯示
 - ✅ 添加了更詳細的日誌記錄
+- ✅ 支持 `access_token` 和 `success` 響應格式
 
 ## 測試步驟
 
@@ -60,7 +44,7 @@ curl -X POST http://localhost:3000/auth/register \
    ```bash
    curl -X POST http://localhost:3000/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"username":"admin","password":"admin"}'
+     -d '{"username":"admin","password":"[正確密碼]"}'
    ```
 
 3. **檢查前端錯誤處理**:
@@ -78,3 +62,6 @@ A: 需要檢查後端是否提供密碼重置功能。
 
 ### Q: 如何創建新用戶？
 A: 需要檢查後端是否提供用戶註冊功能。
+
+### Q: 默認密碼是什麼？
+A: 請查看後端測試文件或環境變數中的 `DEFAULT_ADMIN_PASSWORD`。

@@ -57,7 +57,7 @@ export const useAuth = () => {
   const login = async (username: string, password: string) => {
     try {
       console.log('[useAuth] Attempting login for user:', username);
-      const result = await $fetch<{ access_token: string }>('/auth/login', {
+      const result = await $fetch<{ success?: boolean; access_token?: string; message?: string }>('/auth/login', {
         baseURL: config.public.apiBase,
         method: 'POST',
         body: { username, password },
@@ -72,12 +72,26 @@ export const useAuth = () => {
         }
       });
 
+      console.log('[useAuth] Login response:', result);
+
+      // 檢查是否有 access_token 字段
       if (result.access_token) {
         token.value = result.access_token;
-        console.log('[useAuth] Login successful, token saved');
+        console.log('[useAuth] Login successful, token saved from response');
         await initUser(); // Set user state after getting token
+      } else if (result.success) {
+        // 如果沒有 access_token 字段但有 success，可能是 cookie-based 認證
+        console.log('[useAuth] Login successful via cookie, checking user status');
+        // 嘗試調用 /auth/me 來驗證 cookie 是否有效
+        try {
+          await initUser();
+          console.log('[useAuth] Cookie-based authentication successful');
+        } catch (cookieError) {
+          console.error('[useAuth] Cookie-based authentication failed:', cookieError);
+          throw new Error('登入成功但無法驗證用戶狀態');
+        }
       } else {
-        throw new Error('Missing access token in login response');
+        throw new Error('登入響應格式不正確');
       }
     } catch (err: unknown) {
       console.error('[useAuth] Login failed:', err);
