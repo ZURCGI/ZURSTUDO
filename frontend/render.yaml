@@ -1,0 +1,16 @@
+  # 2. 前端 Nuxt.js 靜態網站
+  - type: web
+    name: zur-frontend
+    env: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run generate
+    staticPublishPath: .output/public
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NUXT_PUBLIC_API_BASE
+        fromService:
+          type: web
+          name: zur-backend
+          property: url
