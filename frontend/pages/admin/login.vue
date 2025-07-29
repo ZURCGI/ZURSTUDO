@@ -1,6 +1,11 @@
 <!-- pages/admin/login.vue -->
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-900 font-sans">
+    <!-- Debug info -->
+    <div class="fixed top-0 left-0 bg-red-500 text-white p-2 text-xs z-50">
+      Login Page Loaded - Route: {{ $route.path }}
+    </div>
+    
     <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl space-y-6 border border-gray-200">
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-800">ZUR Admin</h1>
@@ -51,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onErrorCaptured } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 
 definePageMeta({
@@ -64,14 +69,32 @@ const password = ref('');
 const errorMsg = ref('');
 const loading = ref(false);
 
+onMounted(() => {
+  console.log('[Login Page] Component mounted');
+  console.log('[Login Page] Current route:', window.location.pathname);
+  console.log('[Login Page] Layout disabled:', true);
+  console.log('[Login Page] Window location:', window.location.href);
+  console.log('[Login Page] Document ready state:', document.readyState);
+});
+
+onErrorCaptured((error, instance, info) => {
+  console.error('[Login Page] Error captured:', error);
+  console.error('[Login Page] Error info:', info);
+  console.error('[Login Page] Component instance:', instance);
+  return false; // 防止錯誤繼續傳播
+});
+
 const onSubmit = async () => {
+  console.log('[Login Page] Form submitted');
   loading.value = true;
   errorMsg.value = '';
   try {
     await login(username.value, password.value);
+    console.log('[Login Page] Login successful, redirecting...');
     // 登入成功後，導向到後台主頁
     await navigateTo('/admin/dashboard', { external: true });
   } catch (err: any) {
+    console.error('[Login Page] Login failed:', err);
     errorMsg.value = err?.data?.message || '登入失敗，請檢查您的帳號或密碼。'
   } finally {
     loading.value = false;
