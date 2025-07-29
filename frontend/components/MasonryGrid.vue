@@ -17,8 +17,9 @@
       <NuxtLink
         v-for="(item, index) in items"
         :key="item.publicId"
-        :to="`/archive/${item.publicId}`"
+        :to="getItemLink(item)"
         :data-id="item.publicId"
+        :data-type="item.type"
         class="break-inside-avoid block relative overflow-hidden group masonry-item focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         @click="onCardClick"
         @keydown.enter="onCardClick"
@@ -522,6 +523,25 @@ onBeforeUpdate(() => {
 const clickedThumbnailState = useState('clickedThumbnail')
 
 function onCardClick(e) {
+  // 手機端特殊處理
+  if (isMobile.value) {
+    const item = items.value.find(item => item.publicId === e.currentTarget.dataset.id)
+    if (item && item.type === 'image') {
+      // 圖片在手機端不跳轉，只顯示點擊效果
+      e.preventDefault()
+      e.stopPropagation()
+      
+      // 可以添加一些視覺反饋
+      const card = e.currentTarget
+      card.style.transform = 'scale(0.98)'
+      setTimeout(() => {
+        card.style.transform = 'scale(1)'
+      }, 150)
+      
+      return
+    }
+  }
+  
   clickedThumbnailState.value = e.currentTarget
 }
 
@@ -790,6 +810,20 @@ function showPlayButton(video: HTMLVideoElement) {
     video.parentElement?.appendChild(playButton)
   }
 }
+
+function getItemLink(item: { type: string; url: string; publicId: string; description?: string }) {
+  // 手機端：只有影片和 VIEW360 跳轉到詳細頁
+  if (isMobile.value) {
+    if (item.type === 'video' || item.type === 'view360') {
+      return `/archive/${item.publicId}`
+    }
+    // 圖片在手機端不跳轉
+    return '#'
+  }
+  
+  // 桌面端：所有項目都跳轉到詳細頁
+  return `/archive/${item.publicId}`
+}
 </script>
 
 <style scoped>
@@ -1048,6 +1082,32 @@ function showPlayButton(video: HTMLVideoElement) {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+  }
+  
+  /* 手機端圖片項目樣式 */
+  .masonry-item[data-type="image"] {
+    cursor: default;
+  }
+  
+  .masonry-item[data-type="image"]:hover {
+    transform: none;
+  }
+  
+  /* 手機端影片和 VIEW360 項目樣式 */
+  .masonry-item[data-type="video"],
+  .masonry-item[data-type="view360"] {
+    cursor: pointer;
+  }
+  
+  .masonry-item[data-type="video"]:hover,
+  .masonry-item[data-type="view360"]:hover {
+    transform: scale(1.02);
+  }
+  
+  /* 手機端點擊反饋 */
+  .masonry-item[data-type="image"]:active {
+    transform: scale(0.98);
+    transition: transform 0.15s ease;
   }
 }
 </style>
