@@ -68,7 +68,7 @@
           <p class="mt-4 text-gray-500">沒有足夠的訪問數據來繪製圖表</p>
         </div>
         <div v-else class="h-80">
-          <canvas ref="trendChart"></canvas>
+          <canvas ref="chartCanvas"></canvas>
         </div>
       </div>
       
@@ -146,6 +146,10 @@ const trendChart = shallowRef<Chart | null>(null)
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 
 const renderTrendChart = () => {
+  console.log('[Dashboard] renderTrendChart called')
+  console.log('[Dashboard] chartCanvas.value:', !!chartCanvas.value)
+  console.log('[Dashboard] stats.value.visitTrend:', stats.value.visitTrend)
+  
   // 安全地銷毀現有圖表
   if (trendChart.value && typeof trendChart.value.destroy === 'function') {
     trendChart.value.destroy()

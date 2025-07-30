@@ -30,6 +30,14 @@ interface VisitStat {
   count: number
 }
 
+interface Props {
+  countryStats?: VisitStat[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  countryStats: () => []
+})
+
 const canvasRef = ref<HTMLCanvasElement|null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -41,7 +49,18 @@ const apiBase = config.public.apiBase
 
 onMounted(async () => {
   try {
-    console.log('[VisitorMap] onMounted, initial user:', !!user.value)
+    console.log('[VisitorMap] onMounted, props.countryStats:', props.countryStats)
+    
+    // 如果有傳入的數據，直接使用
+    if (props.countryStats && props.countryStats.length > 0) {
+      console.log('[VisitorMap] Using provided countryStats data')
+      const data = props.countryStats
+      await renderMap(data)
+      return
+    }
+    
+    // 否則自己調用 API
+    console.log('[VisitorMap] No provided data, calling API')
     
     // 等待 useAuth 初始化完成
     await initUser()
@@ -78,7 +97,23 @@ onMounted(async () => {
     }
     
     const data: VisitStat[] = await res.json()
+    await renderMap(data)
+  } catch (e) {
+    // 新增詳細 log
+    console.error('[VisitorMap] API 請求失敗:', {
+      user: user.value,
+      api: `${apiBase}/analytics/visit-stats`,
+      error: e,
+    })
+    error.value = `訪客統計載入失敗：${e?.message || e}`
+    loading.value = false
+  }
+})
 
+const renderMap = async (data: VisitStat[]) => {
+  try {
+    console.log('[VisitorMap] renderMap called with data:', data)
+    
     // 從 public 目錄讀 topojson
     const worldRes = await fetch('/world-110m.json')
     if (!worldRes.ok) throw new Error('載入地圖檔失敗')
@@ -135,6 +170,12 @@ onMounted(async () => {
     }
     
     loading.value = false
+  } catch (e) {
+    console.error('[VisitorMap] renderMap failed:', e)
+    error.value = `地圖渲染失敗：${e?.message || e}`
+    loading.value = false
+  }
+}
   } catch (e) {
     // 新增詳細 log
     console.error('[VisitorMap] API 請求失敗:', {
