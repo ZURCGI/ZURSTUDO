@@ -123,7 +123,6 @@ watch(() => props.countryStats, (newVal) => {
 }, { immediate: true, deep: true })
 
 </script>
-</script>
 
 <style scoped>
 canvas { 
