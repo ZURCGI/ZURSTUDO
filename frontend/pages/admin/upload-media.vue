@@ -16,7 +16,7 @@
 
 
 <script setup lang="ts">
-import { onMounted, onErrorCaptured } from 'vue'
+import { onMounted, onUnmounted, onErrorCaptured } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
@@ -39,6 +39,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('[Upload Media Page] Failed to initialize user state:', error)
   }
+})
+
+// 添加頁面卸載時的清理邏輯
+onUnmounted(() => {
+  console.log('[Upload Media Page] Component unmounted, cleaning up...')
 })
 
 onErrorCaptured((error, instance, info) => {

@@ -290,6 +290,13 @@ const formatFileSize = (bytes: number | undefined | null) => {
 // 初始化載入
 onMounted(() => {
   console.log('[MediaManager] Component mounted, loading media...')
+  
+  // 重置狀態，避免路由切換時的狀態污染
+  media.value = []
+  page.value = 1
+  loading.value = false
+  hasMore.value = true
+  
   loadMore();
 });
 </script>

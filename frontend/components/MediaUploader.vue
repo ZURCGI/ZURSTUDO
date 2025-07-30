@@ -535,6 +535,12 @@ const customProject = ref('')
 // 自動載入專案名稱
 onMounted(async () => {
   console.log('[MediaUploader] Component mounted, loading projects...')
+  
+  // 重置狀態，避免路由切換時的狀態污染
+  projectOptions.value = []
+  project.value = ''
+  customProject.value = ''
+  
   try {
     const config = useRuntimeConfig()
     const res = await $fetch(`${config.public.apiBase}/projects`, {
@@ -557,9 +563,18 @@ onMounted(async () => {
 
 // 新增自訂案名時自動同步到資料庫
 watch(customProject, async (val, oldVal) => {
-  if (project.value === '__custom' && val && val !== oldVal) {
+  // 添加防抖和驗證，避免在路由切換時異常觸發
+  if (project.value === '__custom' && val && val !== oldVal && val.trim()) {
+    // 添加延遲，避免快速輸入時的多次 API 調用
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // 再次檢查值是否仍然有效
+    if (customProject.value !== val) return
+    
     try {
       const config = useRuntimeConfig()
+      console.log('[MediaUploader] Creating new project:', val)
+      
       // 呼叫 API 新增專案名稱
       await $fetch(`${config.public.apiBase}/projects`, {
         method: 'POST',
@@ -570,6 +585,7 @@ watch(customProject, async (val, oldVal) => {
         },
         body: { name: val }
       })
+      
       // 重新載入專案名稱
       const res = await $fetch(`${config.public.apiBase}/projects`, {
         method: 'GET',
@@ -581,6 +597,7 @@ watch(customProject, async (val, oldVal) => {
       })
       projectOptions.value = res.map((p: { name: string }) => p.name)
       project.value = val
+      console.log('[MediaUploader] Project created and loaded successfully')
     } catch (e) {
       console.warn('[MediaUploader] 新增專案失敗:', e)
       // 可加錯誤提示

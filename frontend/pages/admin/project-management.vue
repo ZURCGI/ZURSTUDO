@@ -156,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRuntimeConfig } from '#app'
 import type { Project, CreateProjectDto, UpdateProjectDto } from '~/types/project'
@@ -369,7 +369,24 @@ const formatDate = (dateString: string) => {
 }
 
 onMounted(async () => {
-  await initUser()
-  await loadProjects()
+  console.log('[Project Management] Component mounted')
+  try {
+    await initUser()
+    await loadProjects()
+    console.log('[Project Management] Component initialized successfully')
+  } catch (error) {
+    console.error('[Project Management] Failed to initialize:', error)
+  }
+})
+
+// 添加頁面卸載時的清理邏輯
+onUnmounted(() => {
+  console.log('[Project Management] Component unmounted, cleaning up...')
+  // 清理狀態
+  projects.value = []
+  loading.value = false
+  showCreateModal.value = false
+  showEditModal.value = false
+  editingProject.value = null
 })
 </script> 
