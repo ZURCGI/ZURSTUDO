@@ -36,6 +36,9 @@ const error = ref('')
 const { user, initUser, tokenCookie } = useAuth()
 const config = useRuntimeConfig()
 
+// 檢查 API 基礎 URL
+const apiBase = config.public.apiBase || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com')
+
 onMounted(async () => {
   try {
     console.log('[VisitorMap] onMounted, initial user:', !!user.value)
@@ -55,8 +58,6 @@ onMounted(async () => {
     
     console.log('[VisitorMap] Making request with user:', user.value.username)
     
-    // 檢查 API 基礎 URL
-    const apiBase = config.public.apiBase || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com')
     console.log('[VisitorMap] Using API base:', apiBase)
     
     // 發送 API 請求，使用 credentials: 'include' 發送 cookie
