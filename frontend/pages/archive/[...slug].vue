@@ -188,29 +188,7 @@ const nextId = computed(() =>
 const viewerContainer = ref<HTMLElement | null>(null)
 const videoPlayer = ref<HTMLVideoElement | null>(null)
 
-// 監聽路由變化，重新載入數據
-watch(() => route.params.slug, async (newSlug) => {
-  const newPublicId = Array.isArray(newSlug) ? newSlug.join('/') : newSlug
-  console.log(`[Archive] Route changed to: ${newPublicId}`)
-  
-  // 重置狀態
-  items.value = []
-  page.value = 1
-  hasMore.value = true
-  itemsLoaded.value = false
-  
-  // 重新載入數據
-  await loadMore()
-  
-  // 如果找不到目標媒體，繼續載入更多頁面直到找到
-  let attempts = 0
-  const maxAttempts = 10
-  
-  while (!media.value && attempts < maxAttempts && hasMore.value) {
-    await loadMore()
-    attempts++
-  }
-}, { immediate: false })
+
 
 // 監聽 media 變化，動態初始化動畫與 360° Viewer
 watch(media, async (newMedia) => {
