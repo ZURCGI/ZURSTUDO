@@ -15,63 +15,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Chart } from 'chart.js'
 import { ChoroplethController } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
 
-// 1. 註冊 Controller
+// 註冊 Controller
 Chart.register(ChoroplethController)
 
-// 2. 定義 props，接收從父元件傳來的數據
+// 1. 定義 props
 const props = defineProps<{
   countryStats: { country: string; count: number }[]
 }>()
 
+// 2. 設置 refs
 const canvasRef = ref<HTMLCanvasElement | null>(null)
-const loading = ref(true)
 const error = ref('')
-let chartInstance: Chart | null = null; // 用於儲存圖表實例，方便銷毀和重建
+let chartInstance: Chart | null = null
 
-// 3. 核心渲染函數
-const renderMap = async () => {
-  // 如果沒有數據或 canvas 未準備好，則不執行
-  if (!props.countryStats || props.countryStats.length === 0) {
-    console.log('[VisitorMap] No country stats data to render.')
-    loading.value = false
+// 3. 核心渲染函數 (現在它只負責繪圖)
+const renderChart = async (stats: { country: string; count: number }[]) => {
+  if (!canvasRef.value) {
+    console.error('[VisitorMap] Render attempt failed: Canvas element not ready.')
+    error.value = 'Canvas 元素尚未準備好。'
     return
   }
 
-  // 確保 canvas DOM 元素已掛載
-  await nextTick()
-
-  if (!canvasRef.value) {
-    console.error('[VisitorMap] Canvas element is not available.')
-    error.value = '無法渲染地圖：Canvas 元素不存在。'
-    loading.value = false
+  if (!stats || stats.length === 0) {
+    console.log('[VisitorMap] No data to render.')
+    // 可以選擇顯示一個「無數據」的提示
     return
   }
 
   try {
-    loading.value = true
-
-    // 銷毀舊的圖表實例，防止記憶體洩漏
+    error.value = ''
     if (chartInstance) {
       chartInstance.destroy()
     }
 
-    // 載入地圖輪廓
     const worldRes = await fetch('/world-110m.json')
     if (!worldRes.ok) throw new Error('載入地圖檔失敗')
     const topo = await worldRes.json()
     const world = feature(topo, topo.objects.countries)
 
-    // 準備圖表數據
-    const maxCount = Math.max(...props.countryStats.map(d => d.count), 1)
+    const maxCount = Math.max(...stats.map(d => d.count), 1)
     const chartData = {
       label: '訪客數',
       data: world.features.map((f) => {
-        const stat = props.countryStats.find(d => d.country === f.properties.iso_a3)
+        const stat = stats.find(d => d.country === f.properties.iso_a3)
         return { feature: f, value: stat?.count || 0 }
       }),
       backgroundColor: (ctx: any) => {
@@ -83,7 +74,6 @@ const renderMap = async () => {
       borderWidth: 0.5,
     }
 
-    // 創建新的圖表實例
     const ctx = canvasRef.value.getContext('2d')
     if (ctx) {
       chartInstance = new Chart(ctx, {
@@ -93,6 +83,8 @@ const renderMap = async () => {
           datasets: [chartData],
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
           showOutline: true,
           scales: { xy: { projection: 'equalEarth' } },
           plugins: {
@@ -106,22 +98,28 @@ const renderMap = async () => {
         },
       })
     }
-    error.value = ''
   } catch (e: any) {
-    console.error('[VisitorMap] Failed to render map:', e)
-    error.value = `地圖渲染失敗: ${e.message}`
-  } finally {
-    loading.value = false
+    console.error('[VisitorMap] Failed to render chart:', e)
+    error.value = `圖表渲染失敗: ${e.message}`
   }
 }
 
-// 4. 使用 watch 來監聽 props 的變化
-//    immediate: true 確保在元件初次掛載時，如果 props 有初始值，也會立即執行一次
-watch(() => props.countryStats, (newVal) => {
-  console.log('[VisitorMap] countryStats prop changed, triggering render.', newVal)
-  renderMap()
-}, { immediate: true, deep: true })
-
+// 4. onMounted: 當元件掛載後，我們才開始監聽數據
+onMounted(() => {
+  // 這個時候，canvasRef.value 幾乎可以保證是存在的
+  if (canvasRef.value) {
+    // 使用 watch 來監聽從父元件傳來的 props
+    // immediate: true 確保如果初始 props 有數據，就立刻渲染一次
+    watch(() => props.countryStats, (newStats) => {
+      console.log('[VisitorMap] countryStats updated, calling renderChart.', newStats)
+      renderChart(newStats)
+    }, { immediate: true, deep: true })
+  } else {
+    // 這是一個備用的錯誤處理，正常情況下不應該觸發
+    console.error('[VisitorMap] Canvas element not found on mount!')
+    error.value = '無法找到地圖的掛載點。'
+  }
+})
 </script>
 
 <style scoped>
