@@ -541,24 +541,40 @@ onMounted(async () => {
   project.value = ''
   customProject.value = ''
   
-  try {
-    const config = useRuntimeConfig()
-    const res = await $fetch(`${config.public.apiBase}/projects`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+  // 添加重試機制
+  let retryCount = 0
+  const maxRetries = 3
+  
+  const loadProjects = async () => {
+    try {
+      const config = useRuntimeConfig()
+      const res = await $fetch(`${config.public.apiBase}/projects`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        }
+      })
+      projectOptions.value = res.map((p: { name: string }) => p.name)
+      if (projectOptions.value.length > 0) project.value = projectOptions.value[0]
+      console.log('[MediaUploader] Projects loaded successfully:', projectOptions.value)
+    } catch (e) {
+      console.warn('[MediaUploader] 無法載入專案列表，重試次數:', retryCount, e)
+      retryCount++
+      
+      if (retryCount < maxRetries) {
+        // 延遲重試
+        setTimeout(loadProjects, 1000 * retryCount)
+      } else {
+        console.warn('[MediaUploader] 達到最大重試次數，使用預設值')
+        projectOptions.value = ['鉅虹','精銳'] // fallback
+        project.value = '鉅虹'
       }
-    })
-    projectOptions.value = res.map((p: { name: string }) => p.name)
-    if (projectOptions.value.length > 0) project.value = projectOptions.value[0]
-    console.log('[MediaUploader] Projects loaded successfully:', projectOptions.value)
-  } catch (e) {
-    console.warn('[MediaUploader] 無法載入專案列表，使用預設值:', e)
-    projectOptions.value = ['鉅虹','精銳'] // fallback
-    project.value = '鉅虹'
+    }
   }
+  
+  await loadProjects()
 })
 
 // 新增自訂案名時自動同步到資料庫

@@ -297,7 +297,10 @@ onMounted(() => {
   loading.value = false
   hasMore.value = true
   
-  loadMore();
+  // 添加延遲確保組件完全掛載
+  setTimeout(() => {
+    loadMore();
+  }, 100);
 });
 </script>
 
