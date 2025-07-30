@@ -15,24 +15,47 @@
       >
         <div class="media-item-wrapper flex items-center justify-center mt-16">
           <div class="relative" style="display: inline-block;">
-            <!-- 上一頁按鈕（圖片上方左側，浮在圖片外） -->
+            <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側中間） -->
             <NuxtLink
               v-if="prevId"
               :to="`/archive/${prevId}`"
-              class="hidden md:flex absolute left-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
-              style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
+              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              :class="{
+                'hidden md:flex left-0': true,
+                'left-2 md:left-0': true
+              }"
+              :style="{
+                top: window.innerWidth < 768 ? '50%' : '-20px',
+                transform: window.innerWidth < 768 ? 'translateY(-50%)' : 'none',
+                width: window.innerWidth < 768 ? '40px' : '14px',
+                height: window.innerWidth < 768 ? '40px' : '14px',
+                fontSize: window.innerWidth < 768 ? '1.2rem' : '0.7rem'
+              }"
               aria-label="上一張"
             >‹</NuxtLink>
-            <!-- 下一頁按鈕（圖片上方右側，浮在圖片外） -->
+            <!-- 下一頁按鈕（桌面版：圖片上方右側，手機版：右側中間） -->
             <NuxtLink
               v-if="nextId"
               :to="`/archive/${nextId}`"
-              class="hidden md:flex absolute right-0 z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
-              style="top: -20px; width: 14px; height: 14px; pointer-events: auto; font-size: 0.7rem; border-radius: 50%;"
+              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              :class="{
+                'hidden md:flex right-0': true,
+                'right-2 md:right-0': true
+              }"
+              :style="{
+                top: window.innerWidth < 768 ? '50%' : '-20px',
+                transform: window.innerWidth < 768 ? 'translateY(-50%)' : 'none',
+                width: window.innerWidth < 768 ? '40px' : '14px',
+                height: window.innerWidth < 768 ? '40px' : '14px',
+                fontSize: window.innerWidth < 768 ? '1.2rem' : '0.7rem'
+              }"
               aria-label="下一張"
             >›</NuxtLink>
             <!-- 360° 全景 -->
-            <div v-if="media.type === 'view360'" class="block mx-auto relative" style="width:1000px; height:562px;">
+            <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
+              width: window.innerWidth < 768 ? '100vw' : '1000px',
+              height: window.innerWidth < 768 ? '60vh' : '562px'
+            }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
               <!-- 載入狀態 -->
@@ -179,10 +202,16 @@ const media = computed<MediaItem | null>(() => {
 // 導航
 const slugs = computed(() => items.value.map(i => i.publicId))
 const idx = computed(() => slugs.value.findIndex(s => s === publicId))
-const prevId = computed(() => (idx.value > 0 ? slugs.value[idx.value - 1] : null))
-const nextId = computed(() =>
-  idx.value < slugs.value.length - 1 ? slugs.value[idx.value + 1] : null
-)
+const prevId = computed(() => {
+  if (idx.value > 0) return slugs.value[idx.value - 1]
+  // 循環到最後一張
+  return slugs.value.length > 0 ? slugs.value[slugs.value.length - 1] : null
+})
+const nextId = computed(() => {
+  if (idx.value < slugs.value.length - 1) return slugs.value[idx.value + 1]
+  // 循環到第一張
+  return slugs.value.length > 0 ? slugs.value[0] : null
+})
 
 // IntersectionObserver 載入更多
 const viewerContainer = ref<HTMLElement | null>(null)
@@ -456,8 +485,19 @@ function onTouchStart(e: TouchEvent) {
 }
 function onTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - touchStartX.value
-  if (dx > 50 && prevId.value) router.push(`/archive/${prevId}`)
-  else if (dx < -50 && nextId.value) router.push(`/archive/${nextId}`)
+  const threshold = 50 // 滑動閾值
+  
+  if (dx > threshold) {
+    // 向左滑動，顯示上一張
+    if (prevId.value) {
+      router.push(`/archive/${prevId.value}`)
+    }
+  } else if (dx < -threshold) {
+    // 向右滑動，顯示下一張
+    if (nextId.value) {
+      router.push(`/archive/${nextId.value}`)
+    }
+  }
 }
 </script>
 
