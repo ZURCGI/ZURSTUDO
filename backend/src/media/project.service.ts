@@ -59,17 +59,27 @@ export class ProjectService {
   }
 
   async deleteProject(name: string): Promise<{ success: boolean; message: string }> {
+    console.log(`[ProjectService] 開始刪除專案: ${name}`);
+    
     // 檢查是否有媒體使用此案名
     const hasImage = await this.imgRepo.count({ where: { project: name } });
     const hasVideo = await this.vidRepo.count({ where: { project: name } });
     const hasView360 = await this.v360Repo.count({ where: { project: name } });
+    
+    console.log(`[ProjectService] 檢查結果 - 圖片: ${hasImage}, 影片: ${hasVideo}, 360°: ${hasView360}`);
+    
     if (hasImage || hasVideo || hasView360) {
+      console.log(`[ProjectService] 刪除失敗 - 專案 ${name} 仍有相關媒體`);
       throw new BadRequestException('請先刪除所有相關媒體');
     }
+    
     const result = await this.projectRepo.delete({ name });
     if (result.affected === 0) {
+      console.log(`[ProjectService] 刪除失敗 - 找不到專案: ${name}`);
       throw new NotFoundException('找不到此案名');
     }
+    
+    console.log(`[ProjectService] 專案刪除成功: ${name}`);
     return { success: true, message: '案名已刪除' };
   }
 } 

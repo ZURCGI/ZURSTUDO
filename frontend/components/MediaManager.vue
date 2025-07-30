@@ -211,18 +211,28 @@ const deleteItem = async (item: MediaItem) => {
     try {
       const { user, tokenCookie } = useAuth()
       
+      console.log(`[MediaManager] 開始刪除媒體: ${item.title} (${item.type})`)
+      
       // 只取純 publicId，不含資料夾
       const purePublicId = item.publicId.split('/').pop();
-      await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
+      const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
         method: 'DELETE', 
         credentials: 'include',
         headers: {
           ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
         }
       });
+      
+      // 從列表中移除
       media.value = media.value.filter(m => m.id !== item.id);
+      
+      // 成功提示
+      console.log(`[MediaManager] 刪除成功: ${item.title}`)
+      alert(`刪除成功：${item.title}`)
+      
     } catch (error) {
-      console.error('删除失敗:', error);
+      console.error('[MediaManager] 刪除失敗:', error);
+      alert(`刪除失敗：${error.message || '未知錯誤'}`)
     }
   }
 };

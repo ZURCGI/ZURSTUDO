@@ -456,8 +456,8 @@ function onTouchStart(e: TouchEvent) {
 }
 function onTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - touchStartX.value
-  if (dx > 50 && prevId.value) router.push(`/archive/${prevId.value}`)
-  else if (dx < -50 && nextId.value) router.push(`/archive/${nextId.value}`)
+  if (dx > 50 && prevId.value) router.push(`/archive/${prevId}`)
+  else if (dx < -50 && nextId.value) router.push(`/archive/${nextId}`)
 }
 </script>
 

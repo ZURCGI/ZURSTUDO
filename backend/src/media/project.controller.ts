@@ -103,9 +103,12 @@ export class ProjectController {
   @ApiResponse({ status: 404, description: '找不到此案名' })
   async delete(@Param('name') name: string, @Res() res: Response) {
     try {
+      console.log(`[ProjectController] 收到刪除專案請求: ${name}`);
       const result = await this.projectService.deleteProject(name);
+      console.log(`[ProjectController] 專案刪除成功: ${name}`);
       return res.status(HttpStatus.OK).json(result);
     } catch (e) {
+      console.error(`[ProjectController] 專案刪除失敗: ${name}`, e);
       if (e instanceof BadRequestException) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: e.message });
       }

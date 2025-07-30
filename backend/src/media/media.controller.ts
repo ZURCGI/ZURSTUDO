@@ -439,6 +439,8 @@ export class MediaController {
     return this.mediaService.batchTag(dto.items, dto.tags);
   }
 
+
+
   // 通配符路由必須放在最後，避免攔截其他路由
   @Get('*publicId')
   async findOne(@Param('publicId') publicId: string) {

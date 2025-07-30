@@ -264,14 +264,23 @@ const deleteItem = async (item: MediaItem) => {
   try {
     const { user } = useAuth()
     
-    await $fetch(`${config.public.apiBase}/media/${item.type}/${encodeURIComponent(item.publicId)}`, {
+    console.log(`[MediaLibrary] 開始刪除媒體: ${item.description || item.title} (${item.type})`)
+    
+    const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${encodeURIComponent(item.publicId)}`, {
       method: 'DELETE',
       credentials: 'include'
     })
+    
+    // 從列表中移除
     media.value = media.value.filter(m => m.id !== item.id)
+    
+    // 成功提示
+    console.log(`[MediaLibrary] 刪除成功: ${item.description || item.title}`)
+    alert(`刪除成功：${item.description || item.title}`)
+    
   } catch (error) {
-    console.error('刪除失敗:', error)
-    alert('刪除失敗')
+    console.error('[MediaLibrary] 刪除失敗:', error)
+    alert(`刪除失敗：${error.message || '未知錯誤'}`)
   }
 }
 

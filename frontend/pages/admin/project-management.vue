@@ -333,14 +333,19 @@ const deleteProject = async (project: Project) => {
   try {
     const { user } = useAuth()
     
+    console.log(`[ProjectManagement] 開始刪除專案: ${project.name}`)
+    
     await $fetch(`${config.public.apiBase}/projects/${encodeURIComponent(project.name)}`, {
       method: 'DELETE',
       credentials: 'include'
     })
+    
     await loadProjects()
+    console.log(`[ProjectManagement] 專案刪除成功: ${project.name}`)
     showToast('專案刪除成功', 'success')
+    
   } catch (error: any) {
-    console.error('刪除專案失敗:', error)
+    console.error('[ProjectManagement] 刪除專案失敗:', error)
     
     // 處理後端錯誤
     if (error.status === 400) {

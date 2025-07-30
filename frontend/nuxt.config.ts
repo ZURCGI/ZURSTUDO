@@ -140,12 +140,23 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // 公開配置
     public: {
-      // API 基礎 URL
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com'),
+      // API 基礎 URL - 支援多環境配置
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 
+                (process.env.NODE_ENV === 'development' 
+                  ? 'http://localhost:3000' 
+                  : 'https://zur-backend.onrender.com'),
+      // 備用 API URL (當主要服務不可用時)
+      fallbackApiBase: process.env.NUXT_PUBLIC_FALLBACK_API_BASE || 'http://localhost:3000',
       // 性能監控配置
       performanceMonitoring: {
         enabled: process.env.NODE_ENV === 'development',
         logLevel: 'warn'
+      },
+      // 網路重試配置
+      networkRetry: {
+        maxRetries: 3,
+        retryDelay: 1000,
+        timeout: 5000
       }
     }
   },

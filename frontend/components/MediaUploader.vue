@@ -701,6 +701,9 @@ async function confirmDeleteProject(name: string) {
   if (!confirm(`確定要刪除案名「${name}」？僅當此案名下沒有任何媒體時才可刪除。`)) return
   try {
     const config = useRuntimeConfig()
+    
+    console.log(`[MediaUploader] 開始刪除案名: ${name}`)
+    
     await $fetch(`${config.public.apiBase}/projects/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -709,11 +712,16 @@ async function confirmDeleteProject(name: string) {
         ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
       }
     })
+    
     // 刪除成功後移除本地 options
     projectOptions.value = projectOptions.value.filter(p => p !== name)
     if (project.value === name) project.value = projectOptions.value[0] || ''
-    alert('刪除成功')
+    
+    console.log(`[MediaUploader] 案名刪除成功: ${name}`)
+    alert(`刪除成功：${name}`)
+    
   } catch (e: any) {
+    console.error('[MediaUploader] 案名刪除失敗:', e)
     alert(e?.data?.message || '刪除失敗，請確認此案名下無任何媒體')
   }
 }
