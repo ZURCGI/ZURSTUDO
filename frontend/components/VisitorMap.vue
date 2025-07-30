@@ -47,69 +47,6 @@ const config = useRuntimeConfig()
 // 使用配置中的 API 基礎 URL
 const apiBase = config.public.apiBase
 
-onMounted(async () => {
-  try {
-    console.log('[VisitorMap] onMounted, props.countryStats:', props.countryStats)
-    
-    // 如果有傳入的數據，直接使用
-    if (props.countryStats && props.countryStats.length > 0) {
-      console.log('[VisitorMap] Using provided countryStats data')
-      const data = props.countryStats
-      await renderMap(data)
-      return
-    }
-    
-    // 否則自己調用 API
-    console.log('[VisitorMap] No provided data, calling API')
-    
-    // 等待 useAuth 初始化完成
-    await initUser()
-    
-    console.log('[VisitorMap] after initUser, user:', !!user.value)
-    
-    // 檢查用戶是否已登入
-    if (!user.value) {
-      console.log('[VisitorMap] User not found after initUser')
-      error.value = '未登入，無法取得訪客統計'
-      loading.value = false
-      return
-    }
-    
-    console.log('[VisitorMap] Making request with user:', user.value.username)
-    
-    console.log('[VisitorMap] Using API base:', apiBase)
-    
-    // 發送 API 請求，使用 credentials: 'include' 發送 cookie
-    const res = await fetch(
-      `${apiBase}/analytics/visit-stats`,
-      { 
-        credentials: 'include', // 發送 cookie 進行認證
-        headers: {
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-        }
-      }
-    )
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('[VisitorMap] API response error:', res.status, errorText);
-      throw new Error(`訪客統計錯誤：${res.status} - ${errorText}`);
-    }
-    
-    const data: VisitStat[] = await res.json()
-    await renderMap(data)
-  } catch (e) {
-    // 新增詳細 log
-    console.error('[VisitorMap] API 請求失敗:', {
-      user: user.value,
-      api: `${apiBase}/analytics/visit-stats`,
-      error: e,
-    })
-    error.value = `訪客統計載入失敗：${e?.message || e}`
-    loading.value = false
-  }
-})
-
 const renderMap = async (data: VisitStat[]) => {
   try {
     console.log('[VisitorMap] renderMap called with data:', data)
@@ -176,6 +113,58 @@ const renderMap = async (data: VisitStat[]) => {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  try {
+    console.log('[VisitorMap] onMounted, props.countryStats:', props.countryStats)
+    
+    // 如果有傳入的數據，直接使用
+    if (props.countryStats && props.countryStats.length > 0) {
+      console.log('[VisitorMap] Using provided countryStats data')
+      const data = props.countryStats
+      await renderMap(data)
+      return
+    }
+    
+    // 否則自己調用 API
+    console.log('[VisitorMap] No provided data, calling API')
+    
+    // 等待 useAuth 初始化完成
+    await initUser()
+    
+    console.log('[VisitorMap] after initUser, user:', !!user.value)
+    
+    // 檢查用戶是否已登入
+    if (!user.value) {
+      console.log('[VisitorMap] User not found after initUser')
+      error.value = '未登入，無法取得訪客統計'
+      loading.value = false
+      return
+    }
+    
+    console.log('[VisitorMap] Making request with user:', user.value.username)
+    
+    console.log('[VisitorMap] Using API base:', apiBase)
+    
+    // 發送 API 請求，使用 credentials: 'include' 發送 cookie
+    const res = await fetch(
+      `${apiBase}/analytics/visit-stats`,
+      { 
+        credentials: 'include', // 發送 cookie 進行認證
+        headers: {
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        }
+      }
+    )
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('[VisitorMap] API response error:', res.status, errorText);
+      throw new Error(`訪客統計錯誤：${res.status} - ${errorText}`);
+    }
+    
+    const data: VisitStat[] = await res.json()
+    await renderMap(data)
   } catch (e) {
     // 新增詳細 log
     console.error('[VisitorMap] API 請求失敗:', {

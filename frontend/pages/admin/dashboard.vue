@@ -240,9 +240,12 @@ const formatDate = (dateString: string) => {
 onMounted(async () => {
   await initUser()
   await loadStats()
-  // 延遲渲染圖表，確保數據已加載
+  // 延遲渲染圖表，確保數據已加載和 DOM 已渲染
   await nextTick()
-  renderTrendChart()
+  // 再等待一下確保 canvas 元素已經準備好
+  setTimeout(() => {
+    renderTrendChart()
+  }, 100)
 })
 
 watch(stats, () => {
