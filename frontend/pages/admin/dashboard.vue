@@ -110,7 +110,20 @@
     <!-- 訪客地圖 -->
     <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
       <h3 class="text-xl font-semibold mb-4 text-gray-800">訪客地理分佈</h3>
-      <VisitorMap :countryStats="stats.countryStats" />
+      
+      <!-- 只有在 loading 結束且 countryStats 有數據時，才渲染地圖元件 -->
+      <div v-if="loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p class="mt-4 text-gray-500">載入地圖數據中...</p>
+      </div>
+      <VisitorMap
+        v-else-if="!loading && stats.countryStats && stats.countryStats.length > 0"
+        :countryStats="stats.countryStats"
+      />
+      <div v-else class="text-center py-12">
+        <Icon name="heroicons:globe-alt-solid" class="w-16 h-16 mx-auto text-gray-300" />
+        <p class="mt-4 text-gray-500">沒有地理分佈數據。</p>
+      </div>
     </div>
   </div>
 </template>
