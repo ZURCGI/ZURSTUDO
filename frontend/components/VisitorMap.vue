@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { Chart } from 'chart.js'
 import { ChoroplethController } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
@@ -80,6 +80,7 @@ const renderMap = async (data: VisitStat[]) => {
 
     const ctx = canvasRef.value?.getContext('2d')
     if (ctx) {
+      console.log('[VisitorMap] Canvas context found, creating chart')
       new Chart(ctx, {
         type: 'choropleth',
         data: {
@@ -104,6 +105,11 @@ const renderMap = async (data: VisitStat[]) => {
           }
         }
       })
+      console.log('[VisitorMap] Chart created successfully')
+    } else {
+      // 如果 canvas 仍然不存在，這將幫助我們除錯
+      console.error('[VisitorMap] Canvas context not found even after nextTick!')
+      console.error('[VisitorMap] canvasRef.value:', canvasRef.value)
     }
     
     loading.value = false
@@ -115,6 +121,9 @@ const renderMap = async (data: VisitStat[]) => {
 }
 
 onMounted(async () => {
+  // 等待 Vue 完成 DOM 更新
+  await nextTick()
+  
   try {
     console.log('[VisitorMap] onMounted, props.countryStats:', props.countryStats)
     
