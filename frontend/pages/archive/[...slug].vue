@@ -82,10 +82,19 @@
     <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
       <p v-if="media">{{ media.description }}</p>
     </div>
+    <!-- 載入狀態 -->
+    <div v-if="loading && !media" class="text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p class="text-gray-600">正在載入媒體...</p>
+    </div>
+    
     <!-- 404 提示（只有完全載入完成且 media 為 null 才顯示） -->
     <div v-if="itemsLoaded && !media && !hasMore" class="text-center text-gray-500">
       <h1 class="text-2xl font-bold">404</h1>
-      找不到此媒體：<code>{{ publicId }}</code>
+      <p>找不到此媒體：<code>{{ publicId }}</code></p>
+      <NuxtLink to="/" class="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        返回首頁
+      </NuxtLink>
     </div>
   </div>
 </template>
@@ -182,6 +191,30 @@ const nextId = computed(() =>
 // IntersectionObserver 載入更多
 const viewerContainer = ref<HTMLElement | null>(null)
 const videoPlayer = ref<HTMLVideoElement | null>(null)
+
+// 監聽路由變化，重新載入數據
+watch(() => route.params.slug, async (newSlug) => {
+  const newPublicId = Array.isArray(newSlug) ? newSlug.join('/') : newSlug
+  console.log(`[Archive] Route changed to: ${newPublicId}`)
+  
+  // 重置狀態
+  items.value = []
+  page.value = 1
+  hasMore.value = true
+  itemsLoaded.value = false
+  
+  // 重新載入數據
+  await loadMore()
+  
+  // 如果找不到目標媒體，繼續載入更多頁面直到找到
+  let attempts = 0
+  const maxAttempts = 10
+  
+  while (!media.value && attempts < maxAttempts && hasMore.value) {
+    await loadMore()
+    attempts++
+  }
+}, { immediate: false })
 
 // 監聽 media 變化，動態初始化動畫與 360° Viewer
 watch(media, async (newMedia) => {
@@ -374,7 +407,6 @@ onMounted(async () => {
   const maxAttempts = 10 // 最多嘗試 10 頁
   
   while (!media.value && attempts < maxAttempts && hasMore.value) {
-    console.log(`[Archive] Attempt ${attempts + 1}: Loading more to find media ${publicId}`)
     await loadMore()
     attempts++
   }
