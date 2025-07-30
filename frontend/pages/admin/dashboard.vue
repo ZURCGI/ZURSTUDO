@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, shallowRef, watch, onUnmounted } from 'vue'
+import { onMounted, ref, shallowRef, watch, onUnmounted, nextTick } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useRuntimeConfig } from '#app'
 import VisitorMap from '~/components/VisitorMap.vue'
@@ -152,7 +152,7 @@ const renderTrendChart = () => {
     trendChart.value = null
   }
   
-  if (chartCanvas.value && stats.value.visitTrend.length > 0) {
+  if (chartCanvas.value && stats.value.visitTrend && stats.value.visitTrend.length > 0) {
     const ctx = chartCanvas.value.getContext('2d')
     if (ctx) {
       trendChart.value = new Chart(ctx, {
@@ -210,12 +210,16 @@ const loadStats = async () => {
       return
     }
     
+    console.log('[Dashboard] Loading stats from:', `${config.public.apiBase}/analytics/dashboard`)
+    
     const response = await $fetch(`${config.public.apiBase}/analytics/dashboard`, {
       credentials: 'include', // 發送 cookie 進行認證
       headers: {
         ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
       }
     })
+    
+    console.log('[Dashboard] Stats loaded:', response)
     stats.value = response
   } catch (error) {
     console.error('載入統計數據失敗:', error)
@@ -232,6 +236,8 @@ const formatDate = (dateString: string) => {
 onMounted(async () => {
   await initUser()
   await loadStats()
+  // 延遲渲染圖表，確保數據已加載
+  await nextTick()
   renderTrendChart()
 })
 

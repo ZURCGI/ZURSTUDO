@@ -36,8 +36,8 @@ const error = ref('')
 const { user, initUser, tokenCookie } = useAuth()
 const config = useRuntimeConfig()
 
-// 檢查 API 基礎 URL
-const apiBase = config.public.apiBase || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com')
+// 使用配置中的 API 基礎 URL
+const apiBase = config.public.apiBase
 
 onMounted(async () => {
   try {
