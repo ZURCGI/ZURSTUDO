@@ -53,15 +53,7 @@ export class AnalyticsService {
     @InjectRepository(Visit) private readonly visitRepo: Repository<Visit>,
   ) {}
 
-  // Wrap individual stat functions to handle errors gracefully
-  private async _getStat<T>(fetcher: () => Promise<T>, defaultValue: T, name: string): Promise<T> {
-    try {
-      return await fetcher();
-    } catch (error) {
-      this.logger.error(`Failed to fetch statistic: ${name}`, error.stack);
-      return defaultValue;
-    }
-  }
+
 
   // Original methods remain the same
   async logVisit(ip: string, country: string) {
@@ -144,16 +136,16 @@ export class AnalyticsService {
     return Math.round(avg);
   }
 
-  // This is the new, resilient function
+  // Simplified function - any error will cause the entire Promise.all to fail
   async getFullStats() {
     const [ totalVisits, todayVisits, weeklyVisits, visitTrend, topCountries, countryStats, avgDuration ] = await Promise.all([
-      this._getStat(() => this.getTotalVisits(), 0, 'getTotalVisits'),
-      this._getStat(() => this.getTodayVisits(), 0, 'getTodayVisits'),
-      this._getStat(() => this.getWeeklyVisits(), 0, 'getWeeklyVisits'),
-      this._getStat(() => this.getVisitTrend(), [], 'getVisitTrend'),
-      this._getStat(() => this.getTopCountries(), [], 'getTopCountries'),
-      this._getStat(() => this.getVisitStats(), [], 'getVisitStats'),
-      this._getStat(() => this.getAverageDuration(), 0, 'getAverageDuration'),
+      this.getTotalVisits(),
+      this.getTodayVisits(),
+      this.getWeeklyVisits(),
+      this.getVisitTrend(),
+      this.getTopCountries(),
+      this.getVisitStats(),
+      this.getAverageDuration(),
     ]);
 
     return {

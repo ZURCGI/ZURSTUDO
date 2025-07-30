@@ -3,6 +3,19 @@
   <div class="space-y-8">
     <h1 class="text-3xl font-bold text-gray-800">儀表板</h1>
     
+    <!-- 錯誤顯示 -->
+    <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-bold">儀表板數據載入失敗</p>
+          <p>{{ error }}</p>
+        </div>
+        <button @click="loadStats" class="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+          重試
+        </button>
+      </div>
+    </div>
+    
     <!-- 統計卡片 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
       <div class="bg-white rounded-xl shadow-lg p-6 flex items-center gap-4 border border-gray-200 hover:shadow-xl transition-shadow">
@@ -145,6 +158,7 @@ Chart.register(...registerables)
 const { initUser } = useAuth()
 const config = useRuntimeConfig()
 const loading = ref(false)
+const error = ref('')
 const stats = ref({
   totalVisits: 0,
   todayVisits: 0,
@@ -219,6 +233,7 @@ const renderTrendChart = () => {
 const loadStats = async () => {
   try {
     loading.value = true
+    error.value = '' // 清除之前的錯誤
     const { user, tokenCookie } = useAuth()
     
     // 檢查用戶是否已登入
@@ -238,8 +253,21 @@ const loadStats = async () => {
     
     console.log('[Dashboard] Stats loaded:', response)
     stats.value = response
-  } catch (error) {
-    console.error('載入統計數據失敗:', error)
+  } catch (error: any) {
+    console.error('[Dashboard] 載入統計數據失敗:', error)
+    
+    // 根據錯誤類型提供不同的錯誤信息
+    if (error.status === 500) {
+      error.value = '後端服務器錯誤，請稍後再試'
+    } else if (error.status === 401) {
+      error.value = '認證失敗，請重新登入'
+    } else if (error.status === 403) {
+      error.value = '權限不足，無法訪問統計數據'
+    } else if (error.status >= 500) {
+      error.value = '服務器暫時不可用，請稍後再試'
+    } else {
+      error.value = `載入失敗：${error.message || '未知錯誤'}`
+    }
   } finally {
     loading.value = false
   }
