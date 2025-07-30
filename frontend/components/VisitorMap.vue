@@ -15,176 +15,114 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { Chart } from 'chart.js'
 import { ChoroplethController } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
-import { useRuntimeConfig } from '#app'
-import { useAuth }        from '~/composables/useAuth'
 
-// 只註冊 Controller
+// 1. 註冊 Controller
 Chart.register(ChoroplethController)
 
-interface VisitStat {
-  country: string
-  count: number
-}
+// 2. 定義 props，接收從父元件傳來的數據
+const props = defineProps<{
+  countryStats: { country: string; count: number }[]
+}>()
 
-interface Props {
-  countryStats?: VisitStat[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  countryStats: () => []
-})
-
-const canvasRef = ref<HTMLCanvasElement|null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 const loading = ref(true)
 const error = ref('')
-const { user, initUser, tokenCookie } = useAuth()
-const config = useRuntimeConfig()
+let chartInstance: Chart | null = null; // 用於儲存圖表實例，方便銷毀和重建
 
-// 使用配置中的 API 基礎 URL
-const apiBase = config.public.apiBase
+// 3. 核心渲染函數
+const renderMap = async () => {
+  // 如果沒有數據或 canvas 未準備好，則不執行
+  if (!props.countryStats || props.countryStats.length === 0) {
+    console.log('[VisitorMap] No country stats data to render.')
+    loading.value = false
+    return
+  }
 
-const renderMap = async (data: VisitStat[]) => {
+  // 確保 canvas DOM 元素已掛載
+  await nextTick()
+
+  if (!canvasRef.value) {
+    console.error('[VisitorMap] Canvas element is not available.')
+    error.value = '無法渲染地圖：Canvas 元素不存在。'
+    loading.value = false
+    return
+  }
+
   try {
-    console.log('[VisitorMap] renderMap called with data:', data)
-    
-    // 從 public 目錄讀 topojson
+    loading.value = true
+
+    // 銷毀舊的圖表實例，防止記憶體洩漏
+    if (chartInstance) {
+      chartInstance.destroy()
+    }
+
+    // 載入地圖輪廓
     const worldRes = await fetch('/world-110m.json')
     if (!worldRes.ok) throw new Error('載入地圖檔失敗')
     const topo = await worldRes.json()
+    const world = feature(topo, topo.objects.countries)
 
-    // 轉成 geojson features
-    const world = feature(topo as any, (topo as any).objects.countries) as any
-
-    // 準備 choropleth 資料
-    const maxCount = Math.max(...data.map(d => d.count), 1)
-    const ds = {
+    // 準備圖表數據
+    const maxCount = Math.max(...props.countryStats.map(d => d.count), 1)
+    const chartData = {
       label: '訪客數',
-      data: world.features.map((f: any) => {
-        // ISO3 範例，請依後端回傳調整
-        const iso3 = f.properties.iso_a3
-        const stat = data.find(d => d.country === iso3)
+      data: world.features.map((f) => {
+        const stat = props.countryStats.find(d => d.country === f.properties.iso_a3)
         return { feature: f, value: stat?.count || 0 }
       }),
       backgroundColor: (ctx: any) => {
-        const v = ctx.dataset.data[ctx.dataIndex].value
-        const a = 0.1 + (v / maxCount) * 0.7
-        return `rgba(33,150,243,${a})`
+        const value = ctx.dataset.data[ctx.dataIndex]?.value || 0
+        const alpha = 0.1 + (value / maxCount) * 0.8
+        return `rgba(33, 150, 243, ${alpha})`
       },
+      borderColor: 'rgba(255, 255, 255, 0.3)',
       borderWidth: 0.5,
-      borderColor: 'rgba(255,255,255,0.3)',
     }
 
-    const ctx = canvasRef.value?.getContext('2d')
+    // 創建新的圖表實例
+    const ctx = canvasRef.value.getContext('2d')
     if (ctx) {
-      console.log('[VisitorMap] Canvas context found, creating chart')
-      new Chart(ctx, {
+      chartInstance = new Chart(ctx, {
         type: 'choropleth',
         data: {
           labels: world.features.map((f: any) => f.properties.name),
-          datasets: [ds],
+          datasets: [chartData],
         },
         options: {
           showOutline: true,
           scales: { xy: { projection: 'equalEarth' } },
           plugins: {
+            legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (c: any) => {
-                  const feat = c.dataset.data[c.dataIndex].feature
-                  const name = feat.properties.name
-                  const val  = c.dataset.data[c.dataIndex].value
-                  return `${name}：${val} 次`
-                }
-              }
+                label: (c: any) => `${c.raw.feature.properties.name}: ${c.raw.value} 次`,
+              },
             },
-            legend: { display: false }
-          }
-        }
+          },
+        },
       })
-      console.log('[VisitorMap] Chart created successfully')
-    } else {
-      // 如果 canvas 仍然不存在，這將幫助我們除錯
-      console.error('[VisitorMap] Canvas context not found even after nextTick!')
-      console.error('[VisitorMap] canvasRef.value:', canvasRef.value)
     }
-    
-    loading.value = false
-  } catch (e) {
-    console.error('[VisitorMap] renderMap failed:', e)
-    error.value = `地圖渲染失敗：${e?.message || e}`
+    error.value = ''
+  } catch (e: any) {
+    console.error('[VisitorMap] Failed to render map:', e)
+    error.value = `地圖渲染失敗: ${e.message}`
+  } finally {
     loading.value = false
   }
 }
 
-onMounted(async () => {
-  // 等待 Vue 完成 DOM 更新
-  await nextTick()
-  
-  try {
-    console.log('[VisitorMap] onMounted, props.countryStats:', props.countryStats)
-    
-    // 如果有傳入的數據，直接使用
-    if (props.countryStats && props.countryStats.length > 0) {
-      console.log('[VisitorMap] Using provided countryStats data')
-      const data = props.countryStats
-      await renderMap(data)
-      return
-    }
-    
-    // 否則自己調用 API
-    console.log('[VisitorMap] No provided data, calling API')
-    
-    // 等待 useAuth 初始化完成
-    await initUser()
-    
-    console.log('[VisitorMap] after initUser, user:', !!user.value)
-    
-    // 檢查用戶是否已登入
-    if (!user.value) {
-      console.log('[VisitorMap] User not found after initUser')
-      error.value = '未登入，無法取得訪客統計'
-      loading.value = false
-      return
-    }
-    
-    console.log('[VisitorMap] Making request with user:', user.value.username)
-    
-    console.log('[VisitorMap] Using API base:', apiBase)
-    
-    // 發送 API 請求，使用 credentials: 'include' 發送 cookie
-    const res = await fetch(
-      `${apiBase}/analytics/visit-stats`,
-      { 
-        credentials: 'include', // 發送 cookie 進行認證
-        headers: {
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-        }
-      }
-    )
+// 4. 使用 watch 來監聽 props 的變化
+//    immediate: true 確保在元件初次掛載時，如果 props 有初始值，也會立即執行一次
+watch(() => props.countryStats, (newVal) => {
+  console.log('[VisitorMap] countryStats prop changed, triggering render.', newVal)
+  renderMap()
+}, { immediate: true, deep: true })
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('[VisitorMap] API response error:', res.status, errorText);
-      throw new Error(`訪客統計錯誤：${res.status} - ${errorText}`);
-    }
-    
-    const data: VisitStat[] = await res.json()
-    await renderMap(data)
-  } catch (e) {
-    // 新增詳細 log
-    console.error('[VisitorMap] API 請求失敗:', {
-      user: user.value,
-      api: `${apiBase}/analytics/visit-stats`,
-      error: e,
-    })
-    error.value = `訪客統計載入失敗：${e?.message || e}`
-    loading.value = false
-  }
-})
+</script>
 </script>
 
 <style scoped>
