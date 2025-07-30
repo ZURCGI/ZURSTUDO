@@ -1,6 +1,18 @@
 // plugins/performance-monitor.client.ts
 export default defineNuxtPlugin(() => {
   if (process.client) {
+    // 檢查是否在 INFO 頁面，如果是則跳過性能監控
+    const isInfoPage = () => {
+      return window.location.pathname === '/info' || 
+             window.location.pathname.includes('/info');
+    };
+
+    // 在 INFO 頁面跳過所有性能監控
+    if (isInfoPage()) {
+      console.log('[Performance Monitor] Skipping all monitoring on INFO page');
+      return;
+    }
+
     let clsValue = 0;
     let clsEntries: any[] = [];
     let isFirstInput = true;
@@ -54,7 +66,7 @@ export default defineNuxtPlugin(() => {
     if ('memory' in performance) {
       setInterval(() => {
         const memory = (performance as any).memory
-        if (memory.usedJSHeapSize > 100 * 1024 * 1024) { // 提高到100MB
+        if (memory.usedJSHeapSize > 150 * 1024 * 1024) { // 提高到150MB
           console.warn('記憶體使用過高:', memory.usedJSHeapSize / 1024 / 1024, 'MB')
         }
       }, 60000) // 每60秒檢查一次，減少頻率
@@ -66,12 +78,12 @@ export default defineNuxtPlugin(() => {
         const now = Date.now()
         
         // 只報告真正長的任務，且避免重複報告
-        if (entry.duration > 200 && (now - lastLongTaskTime) > 5000) { // 200ms以上且5秒內不重複
+        if (entry.duration > 300 && (now - lastLongTaskTime) > 10000) { // 300ms以上且10秒內不重複
           longTaskCount++;
           lastLongTaskTime = now;
           
           // 只在連續多次長任務時報告
-          if (longTaskCount >= 2) {
+          if (longTaskCount >= 3) {
             console.warn('連續長任務檢測:', {
               duration: Math.round(entry.duration),
               name: entry.name,

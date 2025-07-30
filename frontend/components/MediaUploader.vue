@@ -249,7 +249,7 @@ const formatFileSize = (bytes: number) => {
 }
 
 // 認證與 API base
-const { token } = useAuth()
+const { user, tokenCookie } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
 
 // 使用者選檔
@@ -347,9 +347,10 @@ async function getUploadSignature(): Promise<SignatureData> {
   const response: SignatureData = await $fetch('/upload/signature', {
     baseURL: apiBase,
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+      ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
     },
     body: {
       folder: folderMap[mediaType.value],
@@ -415,9 +416,10 @@ async function notifyBackend(uploadResult: CloudinaryUploadResult, signatureData
   const response = await $fetch('/upload/callback', {
     baseURL: apiBase,
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+      ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
     },
     body: payload
   })
@@ -532,17 +534,20 @@ const customProject = ref('')
 
 // 自動載入專案名稱
 onMounted(async () => {
+  console.log('[MediaUploader] Component mounted, loading projects...')
   try {
     const config = useRuntimeConfig()
     const res = await $fetch(`${config.public.apiBase}/projects`, {
       method: 'GET',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
       }
     })
     projectOptions.value = res.map((p: { name: string }) => p.name)
     if (projectOptions.value.length > 0) project.value = projectOptions.value[0]
+    console.log('[MediaUploader] Projects loaded successfully:', projectOptions.value)
   } catch (e) {
     console.warn('[MediaUploader] 無法載入專案列表，使用預設值:', e)
     projectOptions.value = ['鉅虹','精銳'] // fallback
@@ -558,18 +563,20 @@ watch(customProject, async (val, oldVal) => {
       // 呼叫 API 新增專案名稱
       await $fetch(`${config.public.apiBase}/projects`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
         },
         body: { name: val }
       })
       // 重新載入專案名稱
       const res = await $fetch(`${config.public.apiBase}/projects`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
         }
       })
       projectOptions.value = res.map((p: { name: string }) => p.name)
@@ -663,9 +670,10 @@ async function confirmDeleteProject(name: string) {
     const config = useRuntimeConfig()
     await $fetch(`${config.public.apiBase}/projects/${encodeURIComponent(name)}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token.value ? { Authorization: `Bearer ${token.value}` } : {})
+        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
       }
     })
     // 刪除成功後移除本地 options

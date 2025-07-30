@@ -187,7 +187,7 @@ interface MediaItem {
 }
 
 const config = useRuntimeConfig()
-const { token } = useAuth()
+const { user } = useAuth()
 const searchQuery = ref('')
 const selectedType = ref('')
 const selectedCategory = ref('')
@@ -245,15 +245,10 @@ const selectAll = () => {
 const loadMedia = async () => {
   try {
     loading.value = true
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     const response = await $fetch(`${config.public.apiBase}/media/list`, {
-      headers
+      credentials: 'include'
     })
     media.value = response.items || []
   } catch (error) {
@@ -267,16 +262,11 @@ const deleteItem = async (item: MediaItem) => {
   if (!confirm(`確定要刪除 "${item.description || item.title}" 嗎？`)) return
   
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     await $fetch(`${config.public.apiBase}/media/${item.type}/${encodeURIComponent(item.publicId)}`, {
       method: 'DELETE',
-      headers
+      credentials: 'include'
     })
     media.value = media.value.filter(m => m.id !== item.id)
   } catch (error) {
@@ -289,12 +279,7 @@ const batchDelete = async () => {
   if (!confirm(`確定要刪除選中的 ${selectedItems.value.size} 個檔案嗎？`)) return
   
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     const items = Array.from(selectedItems.value).map(id => {
       const item = media.value.find(m => m.id === id)
@@ -306,7 +291,7 @@ const batchDelete = async () => {
     
     const response = await $fetch(`${config.public.apiBase}/media/batch/delete`, {
       method: 'POST',
-      headers,
+      credentials: 'include',
       body: { items }
     })
     
@@ -331,16 +316,11 @@ const saveEdit = async () => {
   if (!editingItem.value) return
   
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     await $fetch(`${config.public.apiBase}/media/update/${editingItem.value.type}/${encodeURIComponent(editingItem.value.publicId)}`, {
       method: 'PATCH',
-      headers,
+      credentials: 'include',
       body: {
         description: editingItem.value.description,
         category: editingItem.value.category
@@ -364,15 +344,10 @@ const loadMore = async () => {
   page.value++
   loading.value = true
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     const response = await $fetch(`${config.public.apiBase}/media/list?page=${page.value}`, {
-      headers
+      credentials: 'include'
     })
     if (response.items && response.items.length > 0) {
       media.value = media.value.concat(response.items)

@@ -202,15 +202,19 @@ const renderTrendChart = () => {
 const loadStats = async () => {
   try {
     loading.value = true
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
+    const { user, tokenCookie } = useAuth()
     
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
+    // 檢查用戶是否已登入
+    if (!user.value) {
+      console.log('[Dashboard] User not logged in, skipping stats load')
+      return
     }
     
     const response = await $fetch(`${config.public.apiBase}/analytics/dashboard`, {
-      headers
+      credentials: 'include', // 發送 cookie 進行認證
+      headers: {
+        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+      }
     })
     stats.value = response
   } catch (error) {

@@ -38,6 +38,12 @@
               <span>SEO 管理</span>
             </NuxtLink>
           </li>
+          <li v-if="user?.role === 'admin'">
+            <NuxtLink to="/admin/user-management" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-800 hover:text-white" active-class="bg-blue-600 text-white shadow-lg">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+              <span>用戶管理</span>
+            </NuxtLink>
+          </li>
           
         </ul>
         <div class="mt-auto p-4">

@@ -244,22 +244,25 @@ const faqTab = ref('zh')
 
 // 取得現有設定
 onMounted(async () => {
-  const { token } = useAuth()
-  const headers: Record<string, string> = {}
-  
-  if (token.value) {
-    headers['Authorization'] = `Bearer ${token.value}`
+  try {
+    const { user } = useAuth()
+    
+    const response = await $fetch(`${config.public.apiBase}/settings`, {
+      credentials: 'include'
+    })
+    Object.assign(form.value, response)
+    if (!Array.isArray(form.value.faqListZh)) {
+      form.value.faqListZh = []
+    }
+    if (!Array.isArray(form.value.faqListEn)) {
+      form.value.faqListEn = []
+    }
+    fetchAiSuggest()
+  } catch (error) {
+    console.error('Failed to fetch settings:', error)
+    toast.value = '無法載入 SEO 設定，請稍後再試。'
+    setTimeout(() => (toast.value = ''), 3000)
   }
-  
-  const data = await $fetch(`${config.public.apiBase}/settings`, { headers })
-  Object.assign(form.value, data)
-  if (!Array.isArray(form.value.faqListZh)) {
-    form.value.faqListZh = []
-  }
-  if (!Array.isArray(form.value.faqListEn)) {
-    form.value.faqListEn = []
-  }
-  fetchAiSuggest()
 })
 
 // SEO 分數與建議
@@ -365,20 +368,21 @@ function autoOptimizeSEO() {
 
 // 儲存設定
 async function saveSettings() {
-  const { token } = useAuth()
-  const headers: Record<string, string> = {}
-  
-  if (token.value) {
-    headers['Authorization'] = `Bearer ${token.value}`
+  try {
+    const { user } = useAuth()
+    
+    const response = await $fetch(`${config.public.apiBase}/settings`, {
+      method: 'PUT',
+      body: form.value,
+      credentials: 'include'
+    })
+    toast.value = '設定已儲存！'
+    setTimeout(() => toast.value = '', 2000)
+  } catch (error) {
+    console.error('Failed to save settings:', error)
+    toast.value = '儲存設定失敗，請稍後再試。'
+    setTimeout(() => (toast.value = ''), 3000)
   }
-  
-  await $fetch(`${config.public.apiBase}/settings`, {
-    method: 'PUT',
-    body: form.value,
-    headers,
-  })
-  toast.value = '設定已儲存！'
-  setTimeout(() => toast.value = '', 2000)
 }
 
 function detectGeo() {

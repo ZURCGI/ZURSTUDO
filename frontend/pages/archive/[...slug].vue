@@ -109,7 +109,7 @@ interface MediaItem {
 
 const route = useRoute()
 const { public: { apiBase } } = useRuntimeConfig()
-const { token } = useAuth()
+const { user } = useAuth()
 
 // 狀態
 const items = ref<MediaItem[]>([])

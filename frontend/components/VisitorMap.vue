@@ -33,41 +33,41 @@ interface VisitStat {
 const canvasRef = ref<HTMLCanvasElement|null>(null)
 const loading = ref(true)
 const error = ref('')
-const { token, initUser } = useAuth()
+const { user, initUser, tokenCookie } = useAuth()
 const config = useRuntimeConfig()
 
 onMounted(async () => {
   try {
-    console.log('[VisitorMap] onMounted, initial token:', !!token.value)
+    console.log('[VisitorMap] onMounted, initial user:', !!user.value)
     
     // 等待 useAuth 初始化完成
     await initUser()
     
-    console.log('[VisitorMap] after initUser, token:', !!token.value)
+    console.log('[VisitorMap] after initUser, user:', !!user.value)
     
-    // 再次檢查 token
-    if (!token.value) {
-      console.log('[VisitorMap] Token still not found after initUser')
+    // 檢查用戶是否已登入
+    if (!user.value) {
+      console.log('[VisitorMap] User not found after initUser')
       error.value = '未登入，無法取得訪客統計'
       loading.value = false
       return
     }
     
-    console.log('[VisitorMap] Making request with token:', token.value ? 'exists' : 'missing')
+    console.log('[VisitorMap] Making request with user:', user.value.username)
     
     // 檢查 API 基礎 URL
     const apiBase = config.public.apiBase || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://zur-backend.onrender.com')
     console.log('[VisitorMap] Using API base:', apiBase)
     
-    // 發送 API 請求
-    const headers: Record<string, string> = {}
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
-    
+    // 發送 API 請求，使用 credentials: 'include' 發送 cookie
     const res = await fetch(
       `${apiBase}/analytics/visit-stats`,
-      { headers }
+      { 
+        credentials: 'include', // 發送 cookie 進行認證
+        headers: {
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        }
+      }
     )
 
     if (!res.ok) {
@@ -137,7 +137,7 @@ onMounted(async () => {
   } catch (e) {
     // 新增詳細 log
     console.error('[VisitorMap] API 請求失敗:', {
-      token: token.value,
+      user: user.value,
       api: `${apiBase}/analytics/visit-stats`,
       error: e,
     })

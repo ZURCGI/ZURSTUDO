@@ -158,7 +158,7 @@ const aboutZUR_ZH = [
 useAppSeoMeta({
   title: '聯絡我們 | ZUR STUDIO',
   description: 'ZUR 提供國際級 3D 效果圖、動畫、光雕投影與虛擬實境服務，專案橫跨台灣、歐美與中東，合作對象涵蓋眾多頂級品牌，助力豪宅、商辦、展覽與產品視覺化。',
-siteDescriptionZh: 'ZUR 提供國際級 3D 效果圖、動畫、光雕投影與虛擬實境服務，專案橫跨台灣、歐美與中東，合作對象涵蓋眾多頂級品牌，助力豪宅、商辦、展覽與產品視覺化。',
+  siteDescriptionZh: 'ZUR 提供國際級 3D 效果圖、動畫、光雕投影與虛擬實境服務，專案橫跨台灣、歐美與中東，合作對象涵蓋眾多頂級品牌，助力豪宅、商辦、展覽與產品視覺化。',
   siteDescriptionEn: 'ZUR delivers world-class 3D renderings, animation, projection mapping, and VR services for luxury real estate, commercial, and product visualization. Our portfolio spans Taiwan, Europe, the Middle East, and the US, serving top clients like Zaha Hadid, IKEA, BMW, and Marriott.',
   siteKeywordsZh: '3D效果圖,建築渲染,動畫製作,光雕投影,虛擬實境,視覺化,台灣3D,國際渲染,豪宅視覺,商業空間,頂級設計,國際合作,Zaha Hadid,BIG,Snøhetta,頂級建築,豪宅,商辦,展覽,產品渲染,互動體驗,VR,AR,項目管理,創意設計,渲染公司,視覺顧問,國際品牌,頂級客戶,項目案例',
   siteKeywordsEn: '3D rendering,architectural visualization,animation studio,projection mapping,virtual reality,CGI,photorealistic,luxury real estate,commercial visualization,international projects,high-end design,Neoscape,Brick Visual,Mir,The Boundary,DBOX,Luxigon,Beauty and The Bit,Kilograph,Hayes Davidson,Binyan Studios,immersive experience,VR,AR,creative agency,design consulting,global clients,project showcase,interactive presentation',

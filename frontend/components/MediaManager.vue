@@ -82,8 +82,8 @@
             <template v-if="editingId === item.id">
               <input
                 v-model="editName"
-                @keyup.enter="renameItem(item)"
-                @blur="renameItem(item)"
+                @keyup.enter="saveEdit(item)"
+                @blur="saveEdit(item)"
                 class="border border-primary rounded px-2 py-1 text-sm w-32"
                 autofocus
               />
@@ -166,20 +166,19 @@ function startEdit(item: MediaItem) {
   editName.value = item.title
 }
 
-const renameItem = async (item: MediaItem) => {
+const saveEdit = async (item: MediaItem) => {
   if (!editName.value.trim()) return
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
+    const { user, tokenCookie } = useAuth()
     
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
-    
-    await $fetch(`${config.public.apiBase}/media/${item.type}/${item.id}/rename`, {
-      method: 'PATCH',
-      body: { newName: editName.value },
-      headers
+    await $fetch(`${config.public.apiBase}/media/${item.id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+      },
+      body: { title: editName.value }
     })
     item.title = editName.value
     editingId.value = null
@@ -210,18 +209,16 @@ const selectItem = (item: MediaItem) => {
 const deleteItem = async (item: MediaItem) => {
   if (confirm(`確定要刪除 "${item.title}" 嗎？`)) {
     try {
-      const { token } = useAuth()
-      const headers: Record<string, string> = {}
-      
-      if (token.value) {
-        headers['Authorization'] = `Bearer ${token.value}`
-      }
+      const { user, tokenCookie } = useAuth()
       
       // 只取純 publicId，不含資料夾
       const purePublicId = item.publicId.split('/').pop();
       await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
         method: 'DELETE', 
-        headers 
+        credentials: 'include',
+        headers: {
+          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        }
       });
       media.value = media.value.filter(m => m.id !== item.id);
     } catch (error) {
@@ -234,15 +231,14 @@ const loadMore = async () => {
   if (loading.value || !hasMore.value) return;
   loading.value = true;
   try {
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user, tokenCookie } = useAuth()
+    console.log('[MediaManager] Loading media, page:', page.value)
     
     const response = await $fetch(`${config.public.apiBase}/media/list?page=${page.value}&limit=${pageSize}`, { 
-      headers 
+      credentials: 'include',
+      headers: {
+        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+      }
     });
     const newItems = response.items || [];
     if (page.value === 1) {
@@ -252,8 +248,9 @@ const loadMore = async () => {
     }
     hasMore.value = newItems.length === pageSize;
     page.value += 1;
+    console.log('[MediaManager] Media loaded successfully, items:', newItems.length)
   } catch (error) {
-    console.error('載入媒體失敗:', error);
+    console.error('[MediaManager] 載入媒體失敗:', error);
     hasMore.value = false;
   } finally {
     loading.value = false;
@@ -292,6 +289,7 @@ const formatFileSize = (bytes: number | undefined | null) => {
 
 // 初始化載入
 onMounted(() => {
+  console.log('[MediaManager] Component mounted, loading media...')
   loadMore();
 });
 </script>

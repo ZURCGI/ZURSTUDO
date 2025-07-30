@@ -6,18 +6,29 @@ let isInitialized = false
 
 export default defineNuxtPlugin(() => {
   if (!isInitialized) {
+    // 檢查是否在 INFO 頁面
+    const isInfoPage = () => {
+      return typeof window !== 'undefined' && 
+             (window.location.pathname === '/info' || 
+              window.location.pathname.includes('/info'));
+    };
+
     // 檢查是否已經有 Three.js 實例存在
     if (typeof window !== 'undefined' && (window as any).__THREE_INSTANCE__) {
       threeInstance = (window as any).__THREE_INSTANCE__
-      console.warn('🔧 Three.js 實例已存在，使用現有實例')
+      
+      // 在 INFO 頁面時不顯示警告
+      if (!isInfoPage()) {
+        console.warn('🔧 Three.js 實例已存在，使用現有實例')
+      }
     } else {
       threeInstance = THREE
       // 在 window 上標記 Three.js 實例
       if (typeof window !== 'undefined') {
         (window as any).__THREE_INSTANCE__ = threeInstance
       }
-      // 僅在開發環境顯示日誌
-      if (process.env.NODE_ENV === 'development') {
+      // 僅在開發環境且非 INFO 頁面時顯示日誌
+      if (process.env.NODE_ENV === 'development' && !isInfoPage()) {
         console.log('🔧 Three.js 單例已初始化')
       }
     }

@@ -1,11 +1,23 @@
 // plugins/performance-optimizer.client.ts
 export default defineNuxtPlugin(() => {
   if (process.client) {
+    // 檢查是否在 INFO 頁面，如果是則跳過性能優化
+    const isInfoPage = () => {
+      return window.location.pathname === '/info' || 
+             window.location.pathname.includes('/info');
+    };
+
     // 防止重複的資源載入
     const loadedResources = new Set<string>();
     
     // 優化圖片載入
     const optimizeImageLoading = () => {
+      // 在 INFO 頁面跳過圖片優化
+      if (isInfoPage()) {
+        console.log('[Performance Optimizer] Skipping image optimization on INFO page');
+        return;
+      }
+
       const images = document.querySelectorAll('img[loading="lazy"]');
       images.forEach((img) => {
         if (img instanceof HTMLImageElement) {
@@ -25,6 +37,12 @@ export default defineNuxtPlugin(() => {
     
     // 優化動畫性能
     const optimizeAnimations = () => {
+      // 在 INFO 頁面跳過動畫優化
+      if (isInfoPage()) {
+        console.log('[Performance Optimizer] Skipping animation optimization on INFO page');
+        return;
+      }
+
       // 使用 requestAnimationFrame 來優化動畫
       const originalSetTimeout = window.setTimeout;
       window.setTimeout = function(fn: Function, delay: number, ...args: any[]) {
@@ -37,6 +55,12 @@ export default defineNuxtPlugin(() => {
     
     // 防止記憶體洩漏
     const preventMemoryLeaks = () => {
+      // 在 INFO 頁面跳過記憶體洩漏檢測
+      if (isInfoPage()) {
+        console.log('[Performance Optimizer] Skipping memory leak detection on INFO page');
+        return;
+      }
+
       // 監控 DOM 節點數量，但更寬容一些
       let lastNodeCount = document.querySelectorAll('*').length;
       let consecutiveWarnings = 0;
@@ -46,9 +70,9 @@ export default defineNuxtPlugin(() => {
         const increaseRatio = currentNodeCount / lastNodeCount;
         
         // 只有在節點數量急劇增加且連續多次警告時才報告
-        if (increaseRatio > 2.0 && currentNodeCount > 1000) {
+        if (increaseRatio > 3.0 && currentNodeCount > 2000) {
           consecutiveWarnings++;
-          if (consecutiveWarnings >= 3) {
+          if (consecutiveWarnings >= 5) {
             console.warn('DOM 節點數量急劇增加，可能存在記憶體洩漏:', {
               current: currentNodeCount,
               previous: lastNodeCount,
@@ -61,11 +85,17 @@ export default defineNuxtPlugin(() => {
         }
         
         lastNodeCount = currentNodeCount;
-      }, 30000); // 每30秒檢查一次，減少頻率
+      }, 60000); // 每60秒檢查一次，減少頻率
     };
     
     // 優化滾動性能
     const optimizeScrollPerformance = () => {
+      // 在 INFO 頁面跳過滾動優化
+      if (isInfoPage()) {
+        console.log('[Performance Optimizer] Skipping scroll optimization on INFO page');
+        return;
+      }
+
       let ticking = false;
       
       const updateScroll = () => {

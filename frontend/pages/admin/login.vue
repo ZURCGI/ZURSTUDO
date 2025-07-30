@@ -80,17 +80,22 @@ onErrorCaptured((error, instance, info) => {
 });
 
 const onSubmit = async () => {
-  console.log('[Login Page] Form submitted');
   loading.value = true;
   errorMsg.value = '';
   try {
-    await login(username.value, password.value);
-    console.log('[Login Page] Login successful, redirecting...');
-    // 登入成功後，導向到後台主頁
+    // 注意：這裡的 login 函數需要一個物件作為參數
+    await login({
+      username: username.value,
+      password: password.value,
+    });
+
+    console.log('[Login Page] Login successful, redirecting to dashboard...');
+    // 使用 Nuxt 的 navigateTo，不要用 external: true
     await navigateTo('/admin/dashboard');
+
   } catch (err: any) {
     console.error('[Login Page] Login failed:', err);
-    errorMsg.value = err?.message || err?.data?.message || '登入失敗，請檢查您的帳號或密碼。'
+    errorMsg.value = err?.data?.message || err.message || '登入失敗，請檢查您的帳號或密碼。';
   } finally {
     loading.value = false;
   }

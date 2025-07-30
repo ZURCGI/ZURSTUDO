@@ -231,17 +231,12 @@ const passwordsMatch = computed(() => {
 const createMediaEditor = async () => {
   try {
     creating.value = true
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     const response = await $fetch(`${config.public.apiBase}/users/create-media-editor`, {
       method: 'POST',
       body: mediaEditorForm.value,
-      headers
+      credentials: 'include'
     })
     
     showMessage('媒體編輯者帳號創建成功！', 'success')
@@ -263,17 +258,12 @@ const changePassword = async () => {
 
   try {
     changingPassword.value = true
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     await $fetch(`${config.public.apiBase}/users/change-password`, {
       method: 'PATCH',
       body: { newPassword: passwordForm.value.newPassword },
-      headers
+      credentials: 'include'
     })
     
     showMessage('密碼修改成功！', 'success')
@@ -290,17 +280,12 @@ const changePassword = async () => {
 const createAdmin = async () => {
   try {
     creatingAdmin.value = true
-    const { token } = useAuth()
-    const headers: Record<string, string> = {}
-    
-    if (token.value) {
-      headers['Authorization'] = `Bearer ${token.value}`
-    }
+    const { user } = useAuth()
     
     const response = await $fetch(`${config.public.apiBase}/users/create-admin`, {
       method: 'POST',
       body: adminForm.value,
-      headers
+      credentials: 'include'
     })
     
     showMessage('管理員帳號創建成功！', 'success')

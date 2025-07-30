@@ -1,12 +1,51 @@
 // 抑制特定警告訊息的插件
 export default defineNuxtPlugin(() => {
   if (process.client) {
+    // 檢查是否在 INFO 頁面
+    const isInfoPage = () => {
+      return window.location.pathname === '/info' || 
+             window.location.pathname.includes('/info');
+    };
+
     // 保存原始的 console.warn
     const originalWarn = console.warn;
     
     // 重寫 console.warn 來過濾特定警告
     console.warn = (...args) => {
       const message = args[0];
+      
+      // 在 INFO 頁面更寬鬆地過濾警告
+      if (isInfoPage()) {
+        // 過濾所有與 Three.js 相關的警告
+        if (typeof message === 'string' && 
+            (message.includes('Three.js') ||
+             message.includes('WebGL') ||
+             message.includes('GLSL') ||
+             message.includes('shader') ||
+             message.includes('texture') ||
+             message.includes('GridDistortion') ||
+             message.includes('PhotoSphereViewer'))) {
+          return; // 不顯示 Three.js 相關警告
+        }
+        
+        // 過濾所有與動畫相關的警告
+        if (typeof message === 'string' && 
+            (message.includes('animation') ||
+             message.includes('GSAP') ||
+             message.includes('timeline') ||
+             message.includes('context'))) {
+          return; // 不顯示動畫相關警告
+        }
+        
+        // 過濾所有性能相關的警告
+        if (typeof message === 'string' && 
+            (message.includes('performance') ||
+             message.includes('memory') ||
+             message.includes('long task') ||
+             message.includes('DOM'))) {
+          return; // 不顯示性能相關警告
+        }
+      }
       
       // 過濾 manifest-route-rule 警告
       if (typeof message === 'string' && 
@@ -72,7 +111,7 @@ export default defineNuxtPlugin(() => {
           message.includes('長任務檢測') && 
           args.length > 1 && 
           typeof args[1] === 'number' && 
-          args[1] < 200) {
+          args[1] < 300) {
         return; // 不顯示較短的長任務警告
       }
       
@@ -87,7 +126,7 @@ export default defineNuxtPlugin(() => {
           message.includes('記憶體使用過高') && 
           args.length > 1 && 
           typeof args[1] === 'number' && 
-          args[1] < 100) {
+          args[1] < 150) {
         return; // 不顯示較低的記憶體使用警告
       }
       
@@ -96,7 +135,7 @@ export default defineNuxtPlugin(() => {
           message.includes('連續長任務檢測') && 
           args.length > 1 && 
           typeof args[1] === 'object' && 
-          args[1].duration < 500) {
+          args[1].duration < 800) {
         return; // 不顯示較短的連續長任務警告
       }
       

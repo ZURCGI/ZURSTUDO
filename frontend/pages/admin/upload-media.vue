@@ -16,6 +16,9 @@
 
 
 <script setup lang="ts">
+import { onMounted, onErrorCaptured } from 'vue'
+import { useAuth } from '~/composables/useAuth'
+
 definePageMeta({
   requiresAuth: true,  // ← 打开保护
   layout: 'admin',     // ← 使用 admin 布局（可选）
@@ -24,4 +27,23 @@ definePageMeta({
 // 改成你實際放元件的路徑
 import MediaUploader from '~/components/MediaUploader.vue'
 import MediaManager  from '~/components/MediaManager.vue'
+
+// 確保用戶狀態已初始化
+const { initUser } = useAuth()
+
+onMounted(async () => {
+  console.log('[Upload Media Page] Component mounted')
+  try {
+    await initUser()
+    console.log('[Upload Media Page] User state initialized')
+  } catch (error) {
+    console.error('[Upload Media Page] Failed to initialize user state:', error)
+  }
+})
+
+onErrorCaptured((error, instance, info) => {
+  console.error('[Upload Media Page] Error captured:', error)
+  console.error('[Upload Media Page] Error info:', info)
+  return false // 防止錯誤繼續傳播
+})
 </script>
