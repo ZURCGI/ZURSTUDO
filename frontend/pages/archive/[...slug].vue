@@ -25,11 +25,11 @@
                 'left-2 md:left-0': true
               }"
               :style="{
-                top: window.innerWidth < 768 ? '50%' : '-20px',
-                transform: window.innerWidth < 768 ? 'translateY(-50%)' : 'none',
-                width: window.innerWidth < 768 ? '40px' : '14px',
-                height: window.innerWidth < 768 ? '40px' : '14px',
-                fontSize: window.innerWidth < 768 ? '1.2rem' : '0.7rem'
+                top: isMobile ? '50%' : '-20px',
+                transform: isMobile ? 'translateY(-50%)' : 'none',
+                width: isMobile ? '40px' : '14px',
+                height: isMobile ? '40px' : '14px',
+                fontSize: isMobile ? '1.2rem' : '0.7rem'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
@@ -43,18 +43,18 @@
                 'right-2 md:right-0': true
               }"
               :style="{
-                top: window.innerWidth < 768 ? '50%' : '-20px',
-                transform: window.innerWidth < 768 ? 'translateY(-50%)' : 'none',
-                width: window.innerWidth < 768 ? '40px' : '14px',
-                height: window.innerWidth < 768 ? '40px' : '14px',
-                fontSize: window.innerWidth < 768 ? '1.2rem' : '0.7rem'
+                top: isMobile ? '50%' : '-20px',
+                transform: isMobile ? 'translateY(-50%)' : 'none',
+                width: isMobile ? '40px' : '14px',
+                height: isMobile ? '40px' : '14px',
+                fontSize: isMobile ? '1.2rem' : '0.7rem'
               }"
               aria-label="下一張"
             >›</NuxtLink>
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
-              width: window.innerWidth < 768 ? '100vw' : '1000px',
-              height: window.innerWidth < 768 ? '60vh' : '562px'
+              width: isMobile ? '100vw' : '1000px',
+              height: isMobile ? '60vh' : '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
@@ -155,6 +155,21 @@ const isAnimating = ref(false)
 // View360 控制狀態
 const autoRotate = ref(false)
 const isFullscreen = ref(false)
+
+// 響應式裝置判斷
+const isMobile = ref(false)
+function updateIsMobile() {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 768
+  }
+}
+onMounted(() => {
+  updateIsMobile()
+  window.addEventListener('resize', updateIsMobile)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', updateIsMobile)
+})
 
 // 取得 publicId
 const slugParam = route.params.slug as string | string[]
