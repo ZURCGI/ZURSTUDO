@@ -82,11 +82,7 @@
     <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
       <p v-if="media">{{ media.description }}</p>
     </div>
-    <!-- 載入狀態 -->
-    <div v-if="loading && !media" class="text-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-      <p class="text-gray-600">正在載入媒體...</p>
-    </div>
+
     
     <!-- 404 提示（只有完全載入完成且 media 為 null 才顯示） -->
     <div v-if="itemsLoaded && !media && !hasMore" class="text-center text-gray-500">
