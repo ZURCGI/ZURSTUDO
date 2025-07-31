@@ -29,15 +29,23 @@ export const useAuth = () => {
       return
     }
 
+    // 如果沒有 token，直接返回
+    if (!tokenCookie.value) {
+      console.log('[useAuth] No token found, skipping initUser')
+      return
+    }
+
     console.log('[useAuth] Initializing user state...')
     try {
       // 使用 credentials: 'include' 支援 HTTP-only cookies
       const userData = await $fetch<{ username: string; role?: string }>('/auth/me', {
         baseURL: config.public.apiBase,
-        headers: tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {},
+        headers: { 'Authorization': `Bearer ${tokenCookie.value}` },
         credentials: 'include',
         // 如果後端返回 401，靜默失敗即可
         ignoreResponseError: true,
+        // 添加超時
+        timeout: 5000
       })
 
       if (userData && userData.username) {

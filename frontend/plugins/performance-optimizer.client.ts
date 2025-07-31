@@ -139,6 +139,21 @@ export default defineNuxtPlugin(() => {
     // 在頁面卸載時清理
     window.addEventListener('beforeunload', cleanup);
     
+    // CLS 監控
+    const clsObserver = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const cls = entry.value;
+        console.log('CLS:', cls);
+        
+        // 調整閾值，減少誤報
+        if (cls > 0.1) { // 從 0.05 調整到 0.1
+          console.warn('CLS 累積值過高:', cls, 'entries:', clsObserver.entries.length);
+        }
+      }
+    });
+
+    clsObserver.observe({ entryTypes: ['layout-shift'] });
+    
     // 提供優化工具給其他組件使用
     return {
       provide: {

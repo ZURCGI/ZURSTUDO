@@ -215,24 +215,62 @@ const deleteItem = async (item: MediaItem) => {
       
       // 只取純 publicId，不含資料夾
       const purePublicId = item.publicId.split('/').pop();
-      const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
-        method: 'DELETE', 
-        credentials: 'include',
-        headers: {
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+      
+      // 添加重試機制
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
+            method: 'DELETE', 
+            credentials: 'include',
+            headers: {
+              ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+            },
+            // 增加超時時間
+            timeout: 10000
+          });
+          
+          // 從列表中移除
+          media.value = media.value.filter(m => m.id !== item.id);
+          
+          // 成功提示
+          console.log(`[MediaManager] 刪除成功: ${item.title}`)
+          alert(`刪除成功：${item.title}`)
+          return; // 成功後退出
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`[MediaManager] 刪除失敗 (嘗試 ${retryCount}/${maxRetries}):`, error);
+          
+          if (retryCount >= maxRetries) {
+            throw error; // 重試次數用完，拋出錯誤
+          }
+          
+          // 等待後重試
+          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
-      });
-      
-      // 從列表中移除
-      media.value = media.value.filter(m => m.id !== item.id);
-      
-      // 成功提示
-      console.log(`[MediaManager] 刪除成功: ${item.title}`)
-      alert(`刪除成功：${item.title}`)
+      }
       
     } catch (error) {
       console.error('[MediaManager] 刪除失敗:', error);
-      alert(`刪除失敗：${error.message || '未知錯誤'}`)
+      
+      // 更詳細的錯誤訊息
+      let errorMessage = '未知錯誤';
+      if (error.message) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = '網路連接失敗，請檢查網路連接';
+        } else if (error.message.includes('401')) {
+          errorMessage = '認證失敗，請重新登入';
+        } else if (error.message.includes('404')) {
+          errorMessage = '檔案不存在或已被刪除';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(`刪除失敗：${errorMessage}`)
     }
   }
 };
