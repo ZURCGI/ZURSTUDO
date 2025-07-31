@@ -134,7 +134,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useAuth } from '~/composables/useAuth'
 import { useRuntimeConfig } from '#app'
 
 interface MediaItem {
@@ -222,6 +223,8 @@ const deleteItem = async (item: MediaItem) => {
       
       while (retryCount < maxRetries) {
         try {
+          console.log(`[MediaManager] 嘗試刪除 (${retryCount + 1}/${maxRetries}): ${config.public.apiBase}/media/${item.type}/${purePublicId}`)
+          
           const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
             method: 'DELETE', 
             credentials: 'include',
@@ -229,8 +232,8 @@ const deleteItem = async (item: MediaItem) => {
               ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
             },
             // 增加超時時間
-            timeout: 10000
-          });
+            timeout: 15000
+          }) as any;
           
           // 從列表中移除
           media.value = media.value.filter(m => m.id !== item.id);
@@ -249,7 +252,7 @@ const deleteItem = async (item: MediaItem) => {
           }
           
           // 等待後重試
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
         }
       }
       
@@ -258,19 +261,35 @@ const deleteItem = async (item: MediaItem) => {
       
       // 更詳細的錯誤訊息
       let errorMessage = '未知錯誤';
-      if (error.message) {
-        if (error.message.includes('Failed to fetch')) {
-          errorMessage = '網路連接失敗，請檢查網路連接';
-        } else if (error.message.includes('401')) {
-          errorMessage = '認證失敗，請重新登入';
-        } else if (error.message.includes('404')) {
-          errorMessage = '檔案不存在或已被刪除';
+      let errorDetails = '';
+      
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errorMsg = String(error.message);
+        if (errorMsg.includes('Failed to fetch')) {
+          errorMessage = '網路連接失敗';
+          errorDetails = '請檢查：\n1. 網路連接是否正常\n2. 後端服務是否在線\n3. 防火牆設定';
+        } else if (errorMsg.includes('401')) {
+          errorMessage = '認證失敗';
+          errorDetails = '請重新登入系統';
+        } else if (errorMsg.includes('404')) {
+          errorMessage = '檔案不存在';
+          errorDetails = '檔案可能已被刪除或不存在';
+        } else if (errorMsg.includes('timeout')) {
+          errorMessage = '請求超時';
+          errorDetails = '後端服務可能正在啟動中，請稍後再試';
         } else {
-          errorMessage = error.message;
+          errorMessage = errorMsg;
         }
       }
       
-      alert(`刪除失敗：${errorMessage}`)
+      // 顯示詳細錯誤訊息
+      const fullMessage = `刪除失敗：${errorMessage}\n\n${errorDetails}\n\nAPI 端點：${config.public.apiBase}/media/${item.type}/${item.publicId.split('/').pop()}`;
+      alert(fullMessage);
+      
+      // 如果是網路問題，建議用戶檢查後端服務
+      if (errorMessage.includes('網路連接失敗') || errorMessage.includes('請求超時')) {
+        console.warn('[MediaManager] 建議檢查後端服務狀態：', config.public.apiBase);
+      }
     }
   }
 };
@@ -306,7 +325,7 @@ const loadMore = async () => {
 };
 
 const getTypeClass = (type: string) => {
-  const classes = {
+  const classes: Record<string, string> = {
     image: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     video: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     view360: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
@@ -315,7 +334,7 @@ const getTypeClass = (type: string) => {
 };
 
 const getTypeLabel = (type: string) => {
-  const labels = {
+  const labels: Record<string, string> = {
     image: '圖片',
     video: '影片',
     view360: '360°',
