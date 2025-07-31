@@ -3,7 +3,7 @@ import { defineEventHandler, readBody } from 'h3'
 // 定義模型設定 - 支援三個 AI 模型
 const modelConfigs = {
   llama3: {
-    endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-3.1-70B',
+    endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf',
     getPrompt: (body: any) => {
       return `<s>[INST] You are a world-class SEO expert and creative copywriter. Your task is to generate SEO-optimized content based on the user's website information. You must respond ONLY with a valid JSON object, without any introductory text, explanations, or markdown code blocks. The JSON object must contain these keys: "title" (string), "description" (string), "keywords" (string, comma-separated), and "faqList" (an array of objects, each with "question" and "answer" string properties).
 
