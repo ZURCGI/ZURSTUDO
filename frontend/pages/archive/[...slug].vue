@@ -271,27 +271,28 @@ watch(media, async (newMedia) => {
         if (viewerContainer.value && viewerContainer.value.offsetWidth > 0) {
           const { Viewer } = await import('@photo-sphere-viewer/core');
           
-          // 手機版使用最簡單的配置
-          const viewerConfig = isMobile.value ? {
-            container: viewerContainer.value,
-            panorama: newMedia.url,
-            navbar: false,
-            size: {
-              width: viewerContainer.value.offsetWidth + 'px',
-              height: viewerContainer.value.offsetHeight + 'px'
-            },
-            // 手機版基本配置
-            defaultZoomLvl: 0,
-            moveSpeed: 2.0,
-            zoomSpeed: 1.5,
-            mousewheel: false,
-            touchmoveTwoFingers: true,
-            keyboard: false,
-            // 手機版自動旋轉
-            autorotateLat: 0,
-            autorotateSpeed: '2rpm',
-            autorotateZoom: 0
-          } : {
+                     // 手機版使用最簡單的配置
+           const viewerConfig = isMobile.value ? {
+             container: viewerContainer.value,
+             panorama: newMedia.url,
+             navbar: false,
+             size: {
+               width: viewerContainer.value.offsetWidth + 'px',
+               height: viewerContainer.value.offsetHeight + 'px'
+             },
+             // 手機版基本配置
+             defaultZoomLvl: 0,
+             moveSpeed: 2.0,
+             zoomSpeed: 1.5,
+             mousewheel: false,
+             touchmoveTwoFingers: true,
+             keyboard: false,
+             // 手機版自動旋轉 - 立即啟動
+             autorotateLat: 0,
+             autorotateSpeed: '2rpm',
+             autorotateZoom: 0,
+             autorotate: true
+           } : {
             container: viewerContainer.value,
             panorama: newMedia.url,
             navbar: ['autorotate', 'zoom', 'fullscreen'],
@@ -309,18 +310,7 @@ watch(media, async (newMedia) => {
           try {
             viewerInstance.value = new Viewer(viewerConfig);
             
-            // 手機版自動開始旋轉（延遲執行）
-            if (isMobile.value) {
-              setTimeout(() => {
-                if (viewerInstance.value && typeof viewerInstance.value.startAutorotate === 'function') {
-                  try {
-                    viewerInstance.value.startAutorotate();
-                  } catch (error) {
-                    console.warn('Failed to start autorotate on init:', error);
-                  }
-                }
-              }, 2000); // 延長到 2 秒確保完全初始化
-            }
+            // 手機版自動旋轉已在配置中設置 autorotate: true
             
             animateEntrance();
           } catch (error) {
@@ -595,7 +585,7 @@ function onTouchEnd(e: TouchEvent) {
           console.warn('Failed to start autorotate:', error);
         }
       }
-    }, 2000);
+    }, 1000); // 縮短到 1 秒
   }
 }
 </script>
