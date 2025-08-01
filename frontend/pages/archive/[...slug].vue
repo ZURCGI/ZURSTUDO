@@ -15,7 +15,7 @@
       >
         <div class="media-item-wrapper flex items-center justify-center mt-16">
           <div class="relative" style="display: inline-block;">
-            <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側中間） -->
+            <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側上方） -->
             <NuxtLink
               v-if="prevId"
               :to="`/archive/${prevId}`"
@@ -25,15 +25,15 @@
                 'left-2 md:left-0': true
               }"
               :style="{
-                top: isMobile ? '50%' : '-20px',
-                transform: isMobile ? 'translateY(-50%)' : 'none',
-                width: isMobile ? '40px' : '14px',
-                height: isMobile ? '40px' : '14px',
-                fontSize: isMobile ? '1.2rem' : '0.7rem'
+                top: isMobile ? '-20px' : '-20px',
+                transform: isMobile ? 'none' : 'none',
+                width: isMobile ? '14px' : '14px',
+                height: isMobile ? '14px' : '14px',
+                fontSize: isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
-            <!-- 下一頁按鈕（桌面版：圖片上方右側，手機版：右側中間） -->
+            <!-- 下一頁按鈕（桌面版：圖片上方右側，手機版：右側上方） -->
             <NuxtLink
               v-if="nextId"
               :to="`/archive/${nextId}`"
@@ -43,18 +43,18 @@
                 'right-2 md:right-0': true
               }"
               :style="{
-                top: isMobile ? '50%' : '-20px',
-                transform: isMobile ? 'translateY(-50%)' : 'none',
-                width: isMobile ? '40px' : '14px',
-                height: isMobile ? '40px' : '14px',
-                fontSize: isMobile ? '1.2rem' : '0.7rem'
+                top: isMobile ? '-20px' : '-20px',
+                transform: isMobile ? 'none' : 'none',
+                width: isMobile ? '14px' : '14px',
+                height: isMobile ? '14px' : '14px',
+                fontSize: isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="下一張"
             >›</NuxtLink>
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
               width: isMobile ? '100vw' : '1000px',
-              height: isMobile ? '60vh' : '562px'
+              height: isMobile ? '80vh' : '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
