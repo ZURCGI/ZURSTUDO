@@ -16,6 +16,7 @@
     "@nuxtjs/robots": "^5.2.10",
     "@nuxtjs/sitemap": "^7.3.1",
     "@nuxtjs/tailwindcss": "^7.0.0-beta.0",
+    "@photo-sphere-viewer/autorotate-plugin": "^5.13.4",
     "@photo-sphere-viewer/core": "^5.13.2",
     "@studio-freight/lenis": "^1.0.42",
     "autoprefixer": "^10.4.21",

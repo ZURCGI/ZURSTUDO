@@ -247,46 +247,66 @@ const videoPlayer = ref<HTMLVideoElement | null>(null)
 
 // 監聽 media 變化，動態初始化動畫與 360° Viewer
 watch(media, async (newMedia) => {
-  // 清理舊的實例
+  // 1. 清理舊的實例
   if (viewerInstance.value) {
     viewerInstance.value.destroy?.();
     viewerInstance.value = null;
   }
 
-  if (newMedia?.type === 'view360') {
-    await nextTick();
-    if (!viewerContainer.value) return;
-
-    const { Viewer } = await import('@photo-sphere-viewer/core');
-
-    // 定義桌機和手機的設定
-    const desktopConfig = {
-      container: viewerContainer.value,
-      panorama: newMedia.url,
-      navbar: ['autorotate', 'zoom', 'fullscreen'],
-      defaultZoomLvl: 0,
-    };
-
-    const mobileConfig = {
-      container: viewerContainer.value,
-      panorama: newMedia.url,
-      navbar: false, // 手機不顯示控制列，避免衝突
-      autorotate: true, // 直接使用內建的自動旋轉
-      autorotateSpeed: '1rpm', // 設定一個舒適的轉速 (每分鐘一圈)
-      autorotatePitch: '5deg', // 稍微向上傾斜一點，更有視覺趣味
-    };
-
-    // 根據 isMobile 的值選擇設定
-    const finalConfig = isMobile.value ? mobileConfig : desktopConfig;
-
-    try {
-      viewerInstance.value = new Viewer(finalConfig);
-      // 觸發進場動畫
-      animateEntrance();
-    } catch (error) {
-      console.error('Viewer initialization failed:', error);
-    }
+  if (newMedia?.type !== 'view360') {
+    return;
   }
+
+  await nextTick();
+  const container = viewerContainer.value;
+  if (!container) {
+    console.error('Viewer container not found.');
+    return;
+  }
+
+  // 2. 動態導入 Viewer 和插件
+  const { Viewer } = await import('@photo-sphere-viewer/core');
+  const { AutorotatePlugin } = await import('@photo-sphere-viewer/autorotate-plugin');
+
+  // 3. 準備一個基礎的桌機版設定
+  const config: any = {
+    container: container,
+    panorama: newMedia.url,
+    navbar: ['autorotate', 'zoom', 'fullscreen'], // 桌機版的標準控制列
+    defaultZoomLvl: 0,
+    plugins: [
+      [AutorotatePlugin, {
+        // 桌機版預設不自動播放，讓用戶點擊按鈕
+        autostart: false,
+      }]
+    ]
+  };
+
+  // 4. 如果是手機，就覆蓋掉需要修改的設定
+  if (isMobile.value) {
+    console.log("[Mobile Detect] 手機裝置，啟用自動播放設定。");
+    config.navbar = false; // 手機不顯示控制列
+    // 修改插件設定，讓它自動開始
+    config.plugins = [
+      [AutorotatePlugin, {
+        autostart: true,
+        autorotateSpeed: '1rpm',
+        autorotatePitch: '5deg',
+      }]
+    ];
+  }
+
+  // 5. 使用最終的設定來建立 Viewer
+  try {
+    viewerInstance.value = new Viewer(config);
+    viewerInstance.value.addEventListener('ready', () => {
+      console.log("Viewer is ready.");
+      animateEntrance(); // 觸發您原有的進場動畫
+    }, { once: true });
+  } catch (error) {
+    console.error('Viewer initialization failed:', error);
+  }
+
 }, { immediate: true });
 
 function animateEntrance() {
