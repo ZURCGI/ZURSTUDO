@@ -280,12 +280,12 @@ watch(media, async (newMedia) => {
                width: viewerContainer.value.offsetWidth + 'px',
                height: viewerContainer.value.offsetHeight + 'px'
              },
-             // 手機版基本配置
+             // 手機版基本配置 - 只自動播放，不限制觸控
              defaultZoomLvl: 0,
              moveSpeed: 2.0,
              zoomSpeed: 1.5,
              mousewheel: false,
-             touchmoveTwoFingers: true,
+             touchmoveTwoFingers: false, // 移除雙指觸控限制
              keyboard: false,
              // 手機版自動旋轉 - 立即啟動
              autorotateLat: 0,
@@ -548,16 +548,7 @@ const touchStartX = ref(0)
 function onTouchStart(e: TouchEvent) {
   touchStartX.value = e.changedTouches[0].clientX
   
-  // 手機版：觸控時停止 View360 自動旋轉
-  if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
-    try {
-      if (typeof viewerInstance.value.stopAutorotate === 'function') {
-        viewerInstance.value.stopAutorotate();
-      }
-    } catch (error) {
-      console.warn('Failed to stop autorotate:', error);
-    }
-  }
+  // 手機版：不干擾自動旋轉，讓它持續播放
 }
 function onTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - touchStartX.value
@@ -575,18 +566,7 @@ function onTouchEnd(e: TouchEvent) {
     }
   }
   
-  // 手機版：觸控結束後恢復 View360 自動旋轉
-  if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
-    setTimeout(() => {
-      if (viewerInstance.value && typeof viewerInstance.value.startAutorotate === 'function') {
-        try {
-          viewerInstance.value.startAutorotate();
-        } catch (error) {
-          console.warn('Failed to start autorotate:', error);
-        }
-      }
-    }, 1000); // 縮短到 1 秒
-  }
+  // 手機版：自動旋轉持續播放，不干擾
 }
 </script>
 
