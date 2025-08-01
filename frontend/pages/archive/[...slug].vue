@@ -4,7 +4,7 @@
     <div
       ref="mediaContainer"
       class="relative w-full"
-      style="perspective: 1200px; min-height: 50vh;"
+      :style="isClient && isMobile ? 'perspective: 1200px; min-height: 30vh;' : 'perspective: 1200px; min-height: 50vh;'"
       @touchstart="onTouchStart"
       @touchend="onTouchEnd"
     >
@@ -13,7 +13,7 @@
         :key="media.publicId"
         class="media-item-wrapper absolute inset-0"
       >
-        <div class="media-item-wrapper flex items-center justify-center mt-16">
+        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-4' : 'mt-16'">
           <div class="relative" style="display: inline-block;">
             <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側上方） -->
             <NuxtLink
@@ -54,7 +54,7 @@
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
               width: isClient && isMobile ? '100vw' : '1000px',
-              height: isClient && isMobile ? '65vh' : '562px'
+              height: isClient && isMobile ? '55vh' : '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
@@ -76,7 +76,7 @@
                 :height="720"
                 class="block"
                 @loaded="onMediaReady"
-                style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
+                :style="isClient && isMobile ? 'max-width: 100vw; max-height: 70vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;' : 'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
               />
               <!-- 上一頁/下一頁按鈕 ... -->
             </div>
@@ -89,7 +89,7 @@
                 @canplay="onMediaReady"
                 @mouseenter="isClient && !isMobile && playVideo()"
                 @mouseleave="isClient && !isMobile && pauseVideo()"
-                style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
+                :style="isClient && isMobile ? 'max-width: 100vw; max-height: 70vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;' : 'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
               >
                 <source :src="media.url" type="video/mp4" />
                 <track kind="captions" :src="`/subtitles/${publicId}.vtt`" srclang="zh" label="中文字幕" default />
@@ -102,7 +102,7 @@
       </div>
     </div>
     <!-- 描述文字容器 -->
-    <div ref="descriptionWrapper" class="mt-4 text-center text-gray-600">
+    <div ref="descriptionWrapper" :class="isClient && isMobile ? 'mt-2' : 'mt-4'" class="text-center text-gray-600">
       <p v-if="media">{{ media.description }}</p>
     </div>
 
