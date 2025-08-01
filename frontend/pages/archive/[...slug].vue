@@ -247,107 +247,44 @@ const videoPlayer = ref<HTMLVideoElement | null>(null)
 
 // 監聽 media 變化，動態初始化動畫與 360° Viewer
 watch(media, async (newMedia) => {
-  if (newMedia) {
-    if (descriptionWrapper.value) {
-      gsap.set(descriptionWrapper.value, { opacity: 1 });
-      const text = descriptionWrapper.value.querySelector('p');
-      if (text) {
-        text.innerHTML = newMedia.description || '';
-      }
-    }
-    
-    // 360° Viewer 處理
-    if (viewerInstance.value) {
-      viewerInstance.value.destroy?.();
-      viewerInstance.value = null;
-    }
-    
-    if (newMedia.type === 'view360') {
-      await nextTick();
-      
-      const initViewer = async () => {
-        if (!viewerContainer.value) return;
-        
-        if (viewerContainer.value && viewerContainer.value.offsetWidth > 0) {
-          const { Viewer } = await import('@photo-sphere-viewer/core');
-          
-                     // 手機版使用最簡單的配置
-           const viewerConfig = isMobile.value ? {
-             container: viewerContainer.value,
-             panorama: newMedia.url,
-             navbar: false,
-             size: {
-               width: viewerContainer.value.offsetWidth + 'px',
-               height: viewerContainer.value.offsetHeight + 'px'
-             },
-             // 手機版基本配置 - 只自動播放，不限制觸控
-             defaultZoomLvl: 0,
-             moveSpeed: 2.0,
-             zoomSpeed: 1.5,
-             mousewheel: false,
-             touchmoveTwoFingers: false, // 移除雙指觸控限制
-             keyboard: false,
-             // 手機版自動旋轉 - 立即啟動
-             autorotateLat: 0,
-             autorotateSpeed: '2rpm',
-             autorotateZoom: 0,
-             autorotate: true
-           } : {
-            container: viewerContainer.value,
-            panorama: newMedia.url,
-            navbar: ['autorotate', 'zoom', 'fullscreen'],
-            defaultZoomLvl: 0,
-            moveSpeed: 1.5,
-            zoomSpeed: 1,
-            mousewheel: true,
-            touchmoveTwoFingers: true,
-            size: {
-              width: viewerContainer.value.offsetWidth + 'px',
-              height: viewerContainer.value.offsetHeight + 'px'
-            }
-          };
-          
-          try {
-            viewerInstance.value = new Viewer(viewerConfig);
-            
-            // 手機版自動旋轉已在配置中設置 autorotate: true
-            
-            animateEntrance();
-          } catch (error) {
-            console.error('Viewer initialization error:', error);
-            // 如果初始化失敗，嘗試最基本的配置
-            if (isMobile.value) {
-              try {
-                viewerInstance.value = new Viewer({
-                  container: viewerContainer.value,
-                  panorama: newMedia.url,
-                  navbar: false,
-                  size: {
-                    width: (viewerContainer.value?.offsetWidth || 400) + 'px',
-                    height: (viewerContainer.value?.offsetHeight || 300) + 'px'
-                  }
-                });
-                animateEntrance();
-              } catch (fallbackError) {
-                console.error('Fallback viewer initialization failed:', fallbackError);
-              }
-            }
-          }
-        } else {
-          // 延遲重試
-          setTimeout(() => {
-            if (viewerContainer.value?.offsetWidth > 0) {
-              initViewer();
-            }
-          }, 100);
-        }
-      };
-      
-      try {
-        await initViewer();
-      } catch (error) {
-        console.error('Failed to initialize viewer:', error);
-      }
+  // 清理舊的實例
+  if (viewerInstance.value) {
+    viewerInstance.value.destroy?.();
+    viewerInstance.value = null;
+  }
+
+  if (newMedia?.type === 'view360') {
+    await nextTick();
+    if (!viewerContainer.value) return;
+
+    const { Viewer } = await import('@photo-sphere-viewer/core');
+
+    // 定義桌機和手機的設定
+    const desktopConfig = {
+      container: viewerContainer.value,
+      panorama: newMedia.url,
+      navbar: ['autorotate', 'zoom', 'fullscreen'],
+      defaultZoomLvl: 0,
+    };
+
+    const mobileConfig = {
+      container: viewerContainer.value,
+      panorama: newMedia.url,
+      navbar: false, // 手機不顯示控制列，避免衝突
+      autorotate: true, // 直接使用內建的自動旋轉
+      autorotateSpeed: '1rpm', // 設定一個舒適的轉速 (每分鐘一圈)
+      autorotatePitch: '5deg', // 稍微向上傾斜一點，更有視覺趣味
+    };
+
+    // 根據 isMobile 的值選擇設定
+    const finalConfig = isMobile.value ? mobileConfig : desktopConfig;
+
+    try {
+      viewerInstance.value = new Viewer(finalConfig);
+      // 觸發進場動畫
+      animateEntrance();
+    } catch (error) {
+      console.error('Viewer initialization failed:', error);
     }
   }
 }, { immediate: true });
