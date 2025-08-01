@@ -290,7 +290,7 @@ watch(media, async (newMedia) => {
     config.plugins = [
       [AutorotatePlugin, {
         autostart: true,
-        autorotateSpeed: '1rpm',
+        autorotateSpeed: '3rpm', // 加快到每分鐘3圈
         autorotatePitch: '5deg',
       }]
     ];
