@@ -64,6 +64,11 @@ export function useAppSeoMeta(options: SeoOptions) {
         }
         siteSetting.value = {}
       }
+    } catch (e) {
+      // 任何其他錯誤都使用默認設置
+      console.log('[useAppSeoMeta] Unexpected error, using defaults:', e)
+      siteSetting.value = {}
+    }
     injectHead()
   })
 
