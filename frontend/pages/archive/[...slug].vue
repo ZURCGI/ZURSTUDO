@@ -58,13 +58,14 @@
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
-              <!-- 載入狀態 -->
-              <div v-if="!viewerInstance" class="view360-loading">
-                <div class="flex flex-col items-center gap-3 text-white">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                  <span class="text-sm">載入 360° 全景中...</span>
-                </div>
-              </div>
+                             <!-- 載入狀態 -->
+               <div v-if="!viewerInstance" class="view360-loading">
+                 <div class="flex flex-col items-center gap-3 text-white">
+                   <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                   <span class="text-sm">載入 360° 全景中...</span>
+                   <span v-if="isMobile" class="text-xs text-gray-300 mt-2">自動旋轉載入中，請稍候...</span>
+                 </div>
+               </div>
             </div>
             <!-- 圖片 -->
             <div v-else-if="media.type === 'image'" class="relative w-fit mx-auto">
