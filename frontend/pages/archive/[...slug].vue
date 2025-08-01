@@ -1,12 +1,14 @@
 <template>
-  <div class="archive-page-container">
+  <div 
+    class="archive-page-container"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+  >
     <!-- 媒體動畫容器 -->
     <div
       ref="mediaContainer"
       class="relative w-full"
       :style="isClient && isMobile ? 'perspective: 1200px; min-height: 30vh;' : 'perspective: 1200px; min-height: 50vh;'"
-      @touchstart="onTouchStart"
-      @touchend="onTouchEnd"
     >
       <div
         v-if="media"
@@ -505,21 +507,27 @@ onMounted(() => {
 const router = useRouter()
 const touchStartX = ref(0)
 function onTouchStart(e: TouchEvent) {
+  // 只在手機端啟用滑動導航
+  if (!isClient.value || !isMobile.value) return
+  
   touchStartX.value = e.changedTouches[0].clientX
   
   // 手機版：不干擾自動旋轉，讓它持續播放
 }
 function onTouchEnd(e: TouchEvent) {
+  // 只在手機端啟用滑動導航
+  if (!isClient.value || !isMobile.value) return
+  
   const dx = e.changedTouches[0].clientX - touchStartX.value
   const threshold = 50 // 滑動閾值
   
   if (dx > threshold) {
-    // 向左滑動，顯示上一張
+    // 從左滑到右，顯示上一張
     if (prevId.value) {
       router.push(`/archive/${prevId.value}`)
     }
   } else if (dx < -threshold) {
-    // 向右滑動，顯示下一張
+    // 從右滑到左，顯示下一張
     if (nextId.value) {
       router.push(`/archive/${nextId.value}`)
     }
