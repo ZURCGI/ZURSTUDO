@@ -13,24 +13,23 @@
         :key="media.publicId"
         class="media-item-wrapper absolute inset-0"
       >
-        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-4' : 'mt-16'">
+        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-8' : 'mt-16'">
           <div class="relative" style="display: inline-block;">
             <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側上方） -->
             <NuxtLink
               v-if="prevId"
               :to="`/archive/${prevId}`"
-              class="absolute bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
               :class="{
-                'hidden md:flex': true,
-                'left-4 md:left-0': true
+                'hidden md:flex left-0': true,
+                'left-2 md:left-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '10px' : '-20px',
+                top: isClient && isMobile ? '-20px' : '-20px',
                 transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '20px' : '14px',
-                height: isClient && isMobile ? '20px' : '14px',
-                fontSize: isClient && isMobile ? '0.8rem' : '0.7rem',
-                zIndex: isClient && isMobile ? '50' : '10'
+                width: isClient && isMobile ? '14px' : '14px',
+                height: isClient && isMobile ? '14px' : '14px',
+                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
@@ -38,18 +37,17 @@
             <NuxtLink
               v-if="nextId"
               :to="`/archive/${nextId}`"
-              class="absolute bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
               :class="{
-                'hidden md:flex': true,
-                'right-4 md:right-0': true
+                'hidden md:flex right-0': true,
+                'right-2 md:right-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '10px' : '-20px',
+                top: isClient && isMobile ? '-35px' : '-20px',
                 transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '20px' : '14px',
-                height: isClient && isMobile ? '20px' : '14px',
-                fontSize: isClient && isMobile ? '0.8rem' : '0.7rem',
-                zIndex: isClient && isMobile ? '50' : '10'
+                width: isClient && isMobile ? '14px' : '14px',
+                height: isClient && isMobile ? '14px' : '14px',
+                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="下一張"
             >›</NuxtLink>
