@@ -234,7 +234,7 @@ const loadStats = async () => {
   try {
     loading.value = true
     error.value = '' // 清除之前的錯誤
-    const { user, tokenCookie } = useAuth()
+    const { user } = useAuth()
     
     // 檢查用戶是否已登入
     if (!user.value) {
@@ -245,10 +245,7 @@ const loadStats = async () => {
     console.log('[Dashboard] Loading stats from:', `${config.public.apiBase}/analytics/dashboard`)
     
     const response = await $fetch(`${config.public.apiBase}/analytics/dashboard`, {
-      credentials: 'include', // 發送 cookie 進行認證
-      headers: {
-        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-      }
+      credentials: 'include' // 發送 cookie 進行認證
     })
     
     console.log('[Dashboard] Stats loaded:', response)

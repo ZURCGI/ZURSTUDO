@@ -183,7 +183,9 @@ const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'suc
   toast.value = message
   toastType.value = type
   setTimeout(() => {
-    toast.value = ''
+    if (isComponentMounted.value) {
+      toast.value = ''
+    }
   }, 3000)
 }
 
@@ -194,6 +196,8 @@ const form = ref<CreateProjectDto>({
 const nameError = ref('')
 
 const loadProjects = async () => {
+  if (!isComponentMounted.value) return
+  
   try {
     loading.value = true
     const { user } = useAuth()
@@ -201,8 +205,15 @@ const loadProjects = async () => {
     const response = await $fetch(`${config.public.apiBase}/projects`, {
       credentials: 'include'
     })
+    
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return
+    
     projects.value = response
   } catch (error: any) {
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return
+    
     console.error('載入專案失敗:', error)
     
     if (error.status === 401) {
@@ -213,7 +224,9 @@ const loadProjects = async () => {
       showToast('載入專案失敗，請稍後再試', 'error')
     }
   } finally {
-    loading.value = false
+    if (isComponentMounted.value) {
+      loading.value = false
+    }
   }
 }
 
@@ -277,7 +290,7 @@ const editProject = (project: Project) => {
 
 const saveProject = async () => {
   // 前端驗證
-  if (!validateName()) {
+  if (!validateName() || !isComponentMounted.value) {
     return
   }
   
@@ -302,9 +315,15 @@ const saveProject = async () => {
       })
     }
     
-    await loadProjects()
-    closeModal()
-    showToast(showEditModal.value ? '專案更新成功' : '專案建立成功', 'success')
+    if (isComponentMounted.value) {
+      await loadProjects()
+      
+      // 再次檢查組件是否仍然掛載
+      if (isComponentMounted.value) {
+        closeModal()
+        showToast(showEditModal.value ? '專案更新成功' : '專案建立成功', 'success')
+      }
+    }
   } catch (error: any) {
     console.error('儲存專案失敗:', error)
     
@@ -321,12 +340,14 @@ const saveProject = async () => {
       showToast('儲存失敗，請稍後再試', 'error')
     }
   } finally {
-    saving.value = false
+    if (isComponentMounted.value) {
+      saving.value = false
+    }
   }
 }
 
 const deleteProject = async (project: Project) => {
-  if (!confirm(`確定要刪除專案「${project.name}」嗎？`)) {
+  if (!confirm(`確定要刪除專案「${project.name}」嗎？`) || !isComponentMounted.value) {
     return
   }
   
@@ -340,9 +361,15 @@ const deleteProject = async (project: Project) => {
       credentials: 'include'
     })
     
-    await loadProjects()
-    console.log(`[ProjectManagement] 專案刪除成功: ${project.name}`)
-    showToast('專案刪除成功', 'success')
+    if (isComponentMounted.value) {
+      await loadProjects()
+      
+      // 再次檢查組件是否仍然掛載
+      if (isComponentMounted.value) {
+        console.log(`[ProjectManagement] 專案刪除成功: ${project.name}`)
+        showToast('專案刪除成功', 'success')
+      }
+    }
     
   } catch (error: any) {
     console.error('[ProjectManagement] 刪除專案失敗:', error)
@@ -373,19 +400,31 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-TW')
 }
 
+// 組件掛載狀態追蹤
+let isComponentMounted = ref(true)
+
 onMounted(async () => {
   console.log('[Project Management] Component mounted')
   try {
     await initUser()
+    // 再次檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return
+    
     await loadProjects()
-    console.log('[Project Management] Component initialized successfully')
+    
+    // 最終檢查組件是否仍然掛載
+    if (isComponentMounted.value) {
+      console.log('[Project Management] Component initialized successfully')
+    }
   } catch (error) {
-    console.error('[Project Management] Failed to initialize:', error)
+    if (isComponentMounted.value) {
+      console.error('[Project Management] Failed to initialize:', error)
+    }
   }
 })
 
-// 添加頁面卸載時的清理邏輯
 onUnmounted(() => {
+  isComponentMounted.value = false
   console.log('[Project Management] Component unmounted, cleaning up...')
   // 清理狀態
   projects.value = []

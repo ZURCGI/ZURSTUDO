@@ -249,7 +249,7 @@ const formatFileSize = (bytes: number) => {
 }
 
 // 認證與 API base
-const { user, tokenCookie } = useAuth()
+        const { user } = useAuth()
 const { public: { apiBase } } = useRuntimeConfig()
 
 // 使用者選檔
@@ -349,8 +349,7 @@ async function getUploadSignature(): Promise<SignatureData> {
     method: 'POST',
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
-      ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+      'Content-Type': 'application/json'
     },
     body: {
       folder: folderMap[mediaType.value],
@@ -413,24 +412,45 @@ async function notifyBackend(uploadResult: CloudinaryUploadResult, signatureData
   }
   console.log('[MediaUploader] notifyBackend payload:', payload)
 
-  const response = await $fetch('/upload/callback', {
-    baseURL: apiBase,
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-    },
-    body: payload
-  })
+  try {
+    const response = await $fetch('/upload/callback', {
+      baseURL: apiBase,
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: payload,
+      // 增加超時時間，避免上傳過程中的網路問題
+      timeout: 30000
+    })
 
-  console.log('[MediaUploader] notifyBackend response:', response)
+    console.log('[MediaUploader] notifyBackend response:', response)
 
-  if (!response.success) {
-    throw new Error('儲存媒體記錄失敗')
+    if (!response.success) {
+      throw new Error('儲存媒體記錄失敗')
+    }
+
+    return response
+  } catch (error) {
+    console.error('[MediaUploader] notifyBackend error:', error)
+    
+    // 檢查是否為認證錯誤
+    if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+      console.error('[MediaUploader] 認證失敗，可能需要重新登入')
+      throw new Error('認證失敗，請重新登入系統')
+    }
+    
+    // 檢查是否為網路錯誤
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMsg = String(error.message)
+      if (errorMsg.includes('Failed to fetch') || errorMsg.includes('timeout')) {
+        throw new Error('網路連接失敗，請檢查網路後重試')
+      }
+    }
+    
+    throw error
   }
-
-  return response
 }
 
 // 發送上傳請求
@@ -514,11 +534,24 @@ async function upload() {
     
   } catch (err: unknown) {
     console.error('[MediaUploader] 上傳失敗:', err)
+    
+    let errorMessage = '上傳失敗'
+    
     if (err instanceof Error) {
-      message.value = err.message || '上傳失敗'
-    } else {
-      message.value = '上傳失敗'
+      errorMessage = err.message || '上傳失敗'
+      
+      // 檢查是否為認證相關錯誤
+      if (errorMessage.includes('認證失敗') || errorMessage.includes('401')) {
+        errorMessage = '認證失敗，請重新登入系統'
+        // 延遲重定向，讓用戶看到錯誤訊息
+        setTimeout(() => {
+          const router = useRouter()
+          router.push('/admin/login')
+        }, 2000)
+      }
     }
+    
+    message.value = errorMessage
     messageClass.value = 'text-red-600'
     uploadProgress.value = 0
     uploadStage.value = ''
@@ -533,6 +566,9 @@ const project = ref('')
 const customProject = ref('')
 
 // 自動載入專案名稱
+// 組件掛載狀態追蹤
+let isComponentMounted = ref(true)
+
 onMounted(async () => {
   console.log('[MediaUploader] Component mounted, loading projects...')
   
@@ -546,35 +582,54 @@ onMounted(async () => {
   const maxRetries = 3
   
   const loadProjects = async () => {
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return
+    
     try {
       const config = useRuntimeConfig()
       const res = await $fetch(`${config.public.apiBase}/projects`, {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+          'Content-Type': 'application/json'
         }
       })
+      
+      // 再次檢查組件是否仍然掛載
+      if (!isComponentMounted.value) return
+      
       projectOptions.value = res.map((p: { name: string }) => p.name)
       if (projectOptions.value.length > 0) project.value = projectOptions.value[0]
       console.log('[MediaUploader] Projects loaded successfully:', projectOptions.value)
     } catch (e) {
+      // 檢查組件是否仍然掛載
+      if (!isComponentMounted.value) return
+      
       console.warn('[MediaUploader] 無法載入專案列表，重試次數:', retryCount, e)
       retryCount++
       
       if (retryCount < maxRetries) {
         // 延遲重試
-        setTimeout(loadProjects, 1000 * retryCount)
+        setTimeout(() => {
+          if (isComponentMounted.value) {
+            loadProjects()
+          }
+        }, 1000 * retryCount)
       } else {
         console.warn('[MediaUploader] 達到最大重試次數，使用預設值')
-        projectOptions.value = ['鉅虹','精銳'] // fallback
-        project.value = '鉅虹'
+        if (isComponentMounted.value) {
+          projectOptions.value = ['鉅虹','精銳'] // fallback
+          project.value = '鉅虹'
+        }
       }
     }
   }
   
   await loadProjects()
+})
+
+onUnmounted(() => {
+  isComponentMounted.value = false
 })
 
 // 新增自訂案名時自動同步到資料庫
@@ -596,8 +651,7 @@ watch(customProject, async (val, oldVal) => {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+          'Content-Type': 'application/json'
         },
         body: { name: val }
       })
@@ -607,8 +661,7 @@ watch(customProject, async (val, oldVal) => {
         method: 'GET',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+          'Content-Type': 'application/json'
         }
       })
       projectOptions.value = res.map((p: { name: string }) => p.name)
@@ -708,8 +761,7 @@ async function confirmDeleteProject(name: string) {
       method: 'DELETE',
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
-        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        'Content-Type': 'application/json'
       }
     })
     

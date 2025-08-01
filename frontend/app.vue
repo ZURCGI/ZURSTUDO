@@ -50,14 +50,11 @@ const handleRetry = () => {
 }
 
 // 在應用程式客戶端啟動時，嘗試初始化用戶狀態
-// 這會處理頁面刷新或用戶帶著有效 cookie 回來的情況
 onMounted(() => {
-  console.log('[App] Application mounted, initializing user state...')
   const { initUser } = useAuth();
-  initUser().then(() => {
-    console.log('[App] User state initialization completed')
-  }).catch((error) => {
-    console.error('[App] User state initialization failed:', error)
+  
+  initUser().catch(() => {
+    // 靜默處理錯誤
   });
 })
 </script>

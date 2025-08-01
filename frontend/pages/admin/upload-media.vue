@@ -49,17 +49,26 @@ const isLoading = ref(true)
 const { initUser, isLoggedIn } = useAuth()
 
 const retryLoad = async () => {
+  if (!isComponentMounted.value) return
+  
   pageError.value = ''
   isLoading.value = true
   try {
     await initUser()
-    isLoading.value = false
+    if (isComponentMounted.value) {
+      isLoading.value = false
+    }
   } catch (error) {
-    console.error('[Upload Media Page] Retry failed:', error)
-    pageError.value = `重試失敗：${error.message || error}`
-    isLoading.value = false
+    if (isComponentMounted.value) {
+      console.error('[Upload Media Page] Retry failed:', error)
+      pageError.value = `重試失敗：${error.message || error}`
+      isLoading.value = false
+    }
   }
 }
+
+// 組件掛載狀態追蹤
+const isComponentMounted = ref(true)
 
 onMounted(async () => {
   console.log('[Upload Media Page] Component mounted')
@@ -68,32 +77,34 @@ onMounted(async () => {
     if (!isLoggedIn.value) {
       await initUser()
     }
-    console.log('[Upload Media Page] User state initialized')
+    if (isComponentMounted.value) {
+      console.log('[Upload Media Page] User state initialized')
+    }
   } catch (error) {
-    console.error('[Upload Media Page] Failed to initialize user state:', error)
-    pageError.value = `用戶狀態初始化失敗：${error.message || error}`
+    if (isComponentMounted.value) {
+      console.error('[Upload Media Page] Failed to initialize user state:', error)
+      pageError.value = `用戶狀態初始化失敗：${error.message || error}`
+    }
   } finally {
-    isLoading.value = false
+    if (isComponentMounted.value) {
+      isLoading.value = false
+    }
   }
 })
 
-// 簡化生命週期鉤子，減少不必要的操作
-onActivated(() => {
-  console.log('[Upload Media Page] Component activated')
-})
-
-onDeactivated(() => {
-  console.log('[Upload Media Page] Component deactivated')
-})
-
 onUnmounted(() => {
+  isComponentMounted.value = false
   console.log('[Upload Media Page] Component unmounted, cleaning up...')
 })
 
+
+
 onErrorCaptured((error, instance, info) => {
-  console.error('[Upload Media Page] Error captured:', error)
-  console.error('[Upload Media Page] Error info:', info)
-  pageError.value = `組件錯誤：${error.message || error}`
+  if (isComponentMounted.value) {
+    console.error('[Upload Media Page] Error captured:', error)
+    console.error('[Upload Media Page] Error info:', info)
+    pageError.value = `組件錯誤：${error.message || error}`
+  }
   return false
 })
 </script>

@@ -61,31 +61,39 @@ export default defineNuxtPlugin(() => {
         return;
       }
 
-      // 監控 DOM 節點數量，但更寬容一些
-      let lastNodeCount = document.querySelectorAll('*').length;
-      let consecutiveWarnings = 0;
-      
-      setInterval(() => {
-        const currentNodeCount = document.querySelectorAll('*').length;
-        const increaseRatio = currentNodeCount / lastNodeCount;
+      try {
+        // 監控 DOM 節點數量，但更寬容一些
+        let lastNodeCount = document.querySelectorAll('*').length;
+        let consecutiveWarnings = 0;
         
-        // 只有在節點數量急劇增加且連續多次警告時才報告
-        if (increaseRatio > 3.0 && currentNodeCount > 2000) {
-          consecutiveWarnings++;
-          if (consecutiveWarnings >= 5) {
-            console.warn('DOM 節點數量急劇增加，可能存在記憶體洩漏:', {
-              current: currentNodeCount,
-              previous: lastNodeCount,
-              ratio: increaseRatio.toFixed(2)
-            });
-            consecutiveWarnings = 0; // 重置計數器
+        setInterval(() => {
+          try {
+            const currentNodeCount = document.querySelectorAll('*').length;
+            const increaseRatio = currentNodeCount / lastNodeCount;
+            
+            // 只有在節點數量急劇增加且連續多次警告時才報告
+            if (increaseRatio > 3.0 && currentNodeCount > 2000) {
+              consecutiveWarnings++;
+              if (consecutiveWarnings >= 5) {
+                console.warn('DOM 節點數量急劇增加，可能存在記憶體洩漏:', {
+                  current: currentNodeCount,
+                  previous: lastNodeCount,
+                  ratio: increaseRatio.toFixed(2)
+                });
+                consecutiveWarnings = 0; // 重置計數器
+              }
+            } else {
+              consecutiveWarnings = 0; // 重置計數器
+            }
+            
+            lastNodeCount = currentNodeCount;
+          } catch (error) {
+            console.warn('[Performance Optimizer] Memory leak detection error:', error);
           }
-        } else {
-          consecutiveWarnings = 0; // 重置計數器
-        }
-        
-        lastNodeCount = currentNodeCount;
-      }, 60000); // 每60秒檢查一次，減少頻率
+        }, 60000); // 每60秒檢查一次，減少頻率
+      } catch (error) {
+        console.warn('[Performance Optimizer] Failed to initialize memory leak detection:', error);
+      }
     };
     
     // 優化滾動性能
@@ -121,12 +129,16 @@ export default defineNuxtPlugin(() => {
     
     // 初始化所有優化
     const initializeOptimizations = () => {
-      optimizeImageLoading();
-      optimizeAnimations();
-      preventMemoryLeaks();
-      optimizeScrollPerformance();
-      
-      console.log('🚀 性能優化已啟用');
+      try {
+        optimizeImageLoading();
+        optimizeAnimations();
+        preventMemoryLeaks();
+        optimizeScrollPerformance();
+        
+        console.log('🚀 性能優化已啟用');
+      } catch (error) {
+        console.warn('[Performance Optimizer] Initialization error:', error);
+      }
     };
     
     // 在 DOM 載入完成後初始化
@@ -141,18 +153,27 @@ export default defineNuxtPlugin(() => {
     
     // CLS 監控
     const clsObserver = new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        const cls = entry.value;
-        console.log('CLS:', cls);
-        
-        // 調整閾值，減少誤報
-        if (cls > 0.1) { // 從 0.05 調整到 0.1
-          console.warn('CLS 累積值過高:', cls, 'entries:', clsObserver.entries.length);
+      try {
+        const entries = list.getEntries();
+        for (const entry of entries) {
+          const cls = entry.value;
+          console.log('CLS:', cls);
+          
+          // 調整閾值，減少誤報
+          if (cls > 0.1) { // 從 0.05 調整到 0.1
+            console.warn('CLS 累積值過高:', cls, 'entries:', entries.length);
+          }
         }
+      } catch (error) {
+        console.warn('[Performance Optimizer] CLS monitoring error:', error);
       }
     });
 
-    clsObserver.observe({ entryTypes: ['layout-shift'] });
+    try {
+      clsObserver.observe({ entryTypes: ['layout-shift'] });
+    } catch (error) {
+      console.warn('[Performance Optimizer] Failed to observe layout-shift:', error);
+    }
     
     // 提供優化工具給其他組件使用
     return {

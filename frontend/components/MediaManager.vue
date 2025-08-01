@@ -168,23 +168,28 @@ function startEdit(item: MediaItem) {
 }
 
 const saveEdit = async (item: MediaItem) => {
-  if (!editName.value.trim()) return
+  if (!editName.value.trim() || !isComponentMounted.value) return
   try {
-    const { user, tokenCookie } = useAuth()
+    const { user } = useAuth()
     
     await $fetch(`${config.public.apiBase}/media/${item.id}`, {
       method: 'PUT',
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
-        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
+        'Content-Type': 'application/json'
       },
       body: { title: editName.value }
     })
+    
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return
+    
     item.title = editName.value
     editingId.value = null
   } catch (e) {
-    alert('案名修改失敗')
+    if (isComponentMounted.value) {
+      alert('案名修改失敗')
+    }
   }
 }
 
@@ -208,14 +213,15 @@ const selectItem = (item: MediaItem) => {
 };
 
 const deleteItem = async (item: MediaItem) => {
-  if (confirm(`確定要刪除 "${item.title}" 嗎？`)) {
+  if (confirm(`確定要刪除 "${item.title}" 嗎？`) && isComponentMounted.value) {
     try {
-      const { user, tokenCookie } = useAuth()
+      const { user } = useAuth()
       
       console.log(`[MediaManager] 開始刪除媒體: ${item.title} (${item.type})`)
+      console.log(`[MediaManager] 原始 publicId: ${item.publicId}`)
       
-      // 只取純 publicId，不含資料夾
-      const purePublicId = item.publicId.split('/').pop();
+      // 使用完整的 publicId，讓後端處理路徑邏輯
+      const fullPublicId = item.publicId;
       
       // 添加重試機制
       let retryCount = 0;
@@ -223,24 +229,25 @@ const deleteItem = async (item: MediaItem) => {
       
       while (retryCount < maxRetries) {
         try {
-          console.log(`[MediaManager] 嘗試刪除 (${retryCount + 1}/${maxRetries}): ${config.public.apiBase}/media/${item.type}/${purePublicId}`)
+          console.log(`[MediaManager] 嘗試刪除 (${retryCount + 1}/${maxRetries}): ${config.public.apiBase}/media/${item.type}/${encodeURIComponent(fullPublicId)}`)
           
-          const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${purePublicId}`, { 
+          const response = await $fetch(`${config.public.apiBase}/media/${item.type}/${encodeURIComponent(fullPublicId)}`, { 
             method: 'DELETE', 
             credentials: 'include',
-            headers: {
-              ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-            },
-            // 增加超時時間
-            timeout: 15000
+            // 增加超時時間到 30 秒，因為後端可能需要時間處理 Cloudinary 刪除
+            timeout: 30000
           }) as any;
+          
+          // 檢查組件是否仍然掛載
+          if (!isComponentMounted.value) return;
           
           // 從列表中移除
           media.value = media.value.filter(m => m.id !== item.id);
           
           // 成功提示
           console.log(`[MediaManager] 刪除成功: ${item.title}`)
-          alert(`刪除成功：${item.title}`)
+          // 使用簡單的 alert，避免複雜的 Toast 整合
+          alert(`刪除成功：${item.title}`);
           return; // 成功後退出
           
         } catch (error) {
@@ -248,11 +255,27 @@ const deleteItem = async (item: MediaItem) => {
           console.error(`[MediaManager] 刪除失敗 (嘗試 ${retryCount}/${maxRetries}):`, error);
           
           if (retryCount >= maxRetries) {
+            // 檢查是否是因為檔案已經被刪除而導致的 404
+            if (error && typeof error === 'object' && 'message' in error) {
+              const errorMsg = String(error.message);
+              if (errorMsg.includes('404') && retryCount > 1) {
+                // 可能是第一次超時時檔案已被刪除，視為成功
+                console.log(`[MediaManager] 檔案可能已被刪除，視為成功: ${item.title}`);
+                if (isComponentMounted.value) {
+                  media.value = media.value.filter(m => m.id !== item.id);
+                  alert(`刪除成功：${item.title}`);
+                }
+                return;
+              }
+            }
             throw error; // 重試次數用完，拋出錯誤
           }
           
-          // 等待後重試
-          await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+          // 等待後重試，增加延遲時間
+          await new Promise(resolve => setTimeout(resolve, 3000 * retryCount));
+          
+          // 檢查組件是否仍然掛載
+          if (!isComponentMounted.value) return;
         }
       }
       
@@ -262,29 +285,34 @@ const deleteItem = async (item: MediaItem) => {
       // 更詳細的錯誤訊息
       let errorMessage = '未知錯誤';
       let errorDetails = '';
+      let shouldRetry = false;
       
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMsg = String(error.message);
         if (errorMsg.includes('Failed to fetch')) {
           errorMessage = '網路連接失敗';
           errorDetails = '請檢查：\n1. 網路連接是否正常\n2. 後端服務是否在線\n3. 防火牆設定';
+          shouldRetry = true;
         } else if (errorMsg.includes('401')) {
           errorMessage = '認證失敗';
           errorDetails = '請重新登入系統';
         } else if (errorMsg.includes('404')) {
           errorMessage = '檔案不存在';
-          errorDetails = '檔案可能已被刪除或不存在';
+          errorDetails = '檔案可能已被刪除或不存在。這可能是因為：\n1. 檔案在第一次嘗試時已被刪除\n2. 檔案路徑不正確\n3. 後端服務狀態異常';
         } else if (errorMsg.includes('timeout')) {
           errorMessage = '請求超時';
-          errorDetails = '後端服務可能正在啟動中，請稍後再試';
+          errorDetails = '後端服務可能正在處理中，請稍後再試。如果問題持續，請檢查網路連接。';
+          shouldRetry = true;
         } else {
           errorMessage = errorMsg;
         }
       }
       
-      // 顯示詳細錯誤訊息
-      const fullMessage = `刪除失敗：${errorMessage}\n\n${errorDetails}\n\nAPI 端點：${config.public.apiBase}/media/${item.type}/${item.publicId.split('/').pop()}`;
-      alert(fullMessage);
+      // 如果是超時或網路錯誤，不顯示錯誤訊息，讓重試機制處理
+      if (!shouldRetry && isComponentMounted.value) {
+        const fullMessage = `刪除失敗：${errorMessage}\n\n${errorDetails}\n\nAPI 端點：${config.public.apiBase}/media/${item.type}/${encodeURIComponent(item.publicId)}`;
+        alert(fullMessage);
+      }
       
       // 如果是網路問題，建議用戶檢查後端服務
       if (errorMessage.includes('網路連接失敗') || errorMessage.includes('請求超時')) {
@@ -295,18 +323,19 @@ const deleteItem = async (item: MediaItem) => {
 };
 
 const loadMore = async () => {
-  if (loading.value || !hasMore.value) return;
+  if (loading.value || !hasMore.value || !isComponentMounted.value) return;
   loading.value = true;
   try {
-    const { user, tokenCookie } = useAuth()
+    const { user } = useAuth()
     console.log('[MediaManager] Loading media, page:', page.value)
     
     const response = await $fetch(`${config.public.apiBase}/media/list?page=${page.value}&limit=${pageSize}`, { 
-      credentials: 'include',
-      headers: {
-        ...(tokenCookie.value ? { 'Authorization': `Bearer ${tokenCookie.value}` } : {})
-      }
+      credentials: 'include'
     });
+    
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return;
+    
     const newItems = response.items || [];
     if (page.value === 1) {
       media.value = newItems;
@@ -317,10 +346,15 @@ const loadMore = async () => {
     page.value += 1;
     console.log('[MediaManager] Media loaded successfully, items:', newItems.length)
   } catch (error) {
+    // 檢查組件是否仍然掛載
+    if (!isComponentMounted.value) return;
+    
     console.error('[MediaManager] 載入媒體失敗:', error);
     hasMore.value = false;
   } finally {
-    loading.value = false;
+    if (isComponentMounted.value) {
+      loading.value = false;
+    }
   }
 };
 
@@ -354,6 +388,9 @@ const formatFileSize = (bytes: number | undefined | null) => {
   return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
 };
 
+// 組件掛載狀態追蹤
+let isComponentMounted = ref(true)
+
 // 初始化載入
 onMounted(() => {
   console.log('[MediaManager] Component mounted, loading media...')
@@ -366,9 +403,15 @@ onMounted(() => {
   
   // 添加延遲確保組件完全掛載
   setTimeout(() => {
-    loadMore();
+    if (isComponentMounted.value) {
+      loadMore();
+    }
   }, 100);
 });
+
+onUnmounted(() => {
+  isComponentMounted.value = false
+})
 </script>
 
 <style scoped>

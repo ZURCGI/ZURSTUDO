@@ -83,12 +83,11 @@
             <div v-else-if="media.type === 'video'" class="relative w-fit mx-auto">
               <video
                 ref="videoPlayer"
-                preload="metadata"
-                loop
+                v-bind="videoAttributes"
                 class="block"
                 @canplay="onMediaReady"
-                @mouseenter="playVideo"
-                @mouseleave="pauseVideo"
+                @mouseenter="!isMobile && playVideo()"
+                @mouseleave="!isMobile && pauseVideo()"
                 style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
               >
                 <source :src="media.url" type="video/mp4" />
@@ -163,6 +162,18 @@ function updateIsMobile() {
     isMobile.value = window.innerWidth < 768
   }
 }
+
+// 影片屬性計算
+const videoAttributes = computed(() => {
+  if (isMobile.value) {
+    // 手機版：自動播放、靜音（必須）、循環、內聯播放
+    return { autoplay: true, muted: true, loop: true, playsinline: true }
+  } else {
+    // 桌面版：滑鼠懸停播放
+    return { loop: true, preload: 'metadata' }
+  }
+})
+
 onMounted(() => {
   updateIsMobile()
   window.addEventListener('resize', updateIsMobile)
@@ -265,17 +276,32 @@ watch(media, async (newMedia) => {
           viewerInstance.value = new Viewer({
             container: viewerContainer.value,
             panorama: newMedia.url,
-            navbar: ['autorotate', 'zoom', 'fullscreen'],
+            navbar: isMobile.value ? ['autorotate', 'fullscreen'] : ['autorotate', 'zoom', 'fullscreen'],
             defaultZoomLvl: 0,
-            moveSpeed: 1.5,
-            zoomSpeed: 1,
-            mousewheel: true,
+            moveSpeed: isMobile.value ? 2.0 : 1.5,
+            zoomSpeed: isMobile.value ? 1.5 : 1,
+            mousewheel: !isMobile.value,
             touchmoveTwoFingers: true,
             size: {
               width: viewerContainer.value.offsetWidth,
               height: viewerContainer.value.offsetHeight
-            }
+            },
+            // 手機版自動旋轉
+            ...(isMobile.value && {
+              autorotateLat: 0,
+              autorotateSpeed: '2rpm',
+              autorotateZoom: 0
+            })
           });
+          
+          // 手機版自動開始旋轉
+          if (isMobile.value) {
+            setTimeout(() => {
+              if (viewerInstance.value) {
+                viewerInstance.value.startAutorotate();
+              }
+            }, 1000);
+          }
           
           animateEntrance();
         } else {
@@ -497,6 +523,11 @@ const router = useRouter()
 const touchStartX = ref(0)
 function onTouchStart(e: TouchEvent) {
   touchStartX.value = e.changedTouches[0].clientX
+  
+  // 手機版：觸控時停止 View360 自動旋轉
+  if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
+    viewerInstance.value.stopAutorotate();
+  }
 }
 function onTouchEnd(e: TouchEvent) {
   const dx = e.changedTouches[0].clientX - touchStartX.value
@@ -512,6 +543,15 @@ function onTouchEnd(e: TouchEvent) {
     if (nextId.value) {
       router.push(`/archive/${nextId.value}`)
     }
+  }
+  
+  // 手機版：觸控結束後恢復 View360 自動旋轉
+  if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
+    setTimeout(() => {
+      if (viewerInstance.value) {
+        viewerInstance.value.startAutorotate();
+      }
+    }, 2000);
   }
 }
 </script>

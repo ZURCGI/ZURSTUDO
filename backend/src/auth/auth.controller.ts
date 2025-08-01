@@ -60,11 +60,11 @@ export class AuthController {
       access_token ? 'exists' : 'missing',
     );
 
-    // 設置 httpOnly cookie
+    // 設置安全的 HTTP-only cookie
     res.cookie('auth-token', access_token, {
-      httpOnly: true,
+      httpOnly: true, // 安全 token
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax', // 防止 CSRF 攻擊
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7天
       path: '/',
     });
@@ -133,11 +133,12 @@ export class AuthController {
   @Post('logout')
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('auth-token', {
-      httpOnly: true, // 改為 true，避免 XSS
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax',
       path: '/',
     });
+    
     return { success: true };
   }
 }
