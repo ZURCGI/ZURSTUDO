@@ -19,17 +19,18 @@
             <NuxtLink
               v-if="prevId"
               :to="`/archive/${prevId}`"
-              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              class="absolute bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
               :class="{
-                'hidden md:flex left-0': true,
-                'left-2 md:left-0': true
+                'hidden md:flex': true,
+                'left-4 md:left-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '-20px' : '-20px',
+                top: isClient && isMobile ? '10px' : '-20px',
                 transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '14px' : '14px',
-                height: isClient && isMobile ? '14px' : '14px',
-                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
+                width: isClient && isMobile ? '20px' : '14px',
+                height: isClient && isMobile ? '20px' : '14px',
+                fontSize: isClient && isMobile ? '0.8rem' : '0.7rem',
+                zIndex: isClient && isMobile ? '50' : '10'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
@@ -37,17 +38,18 @@
             <NuxtLink
               v-if="nextId"
               :to="`/archive/${nextId}`"
-              class="absolute z-10 bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
+              class="absolute bg-black/90 text-white items-center justify-center rounded-full hover:bg-black transition"
               :class="{
-                'hidden md:flex right-0': true,
-                'right-2 md:right-0': true
+                'hidden md:flex': true,
+                'right-4 md:right-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '-20px' : '-20px',
+                top: isClient && isMobile ? '10px' : '-20px',
                 transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '14px' : '14px',
-                height: isClient && isMobile ? '14px' : '14px',
-                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
+                width: isClient && isMobile ? '20px' : '14px',
+                height: isClient && isMobile ? '20px' : '14px',
+                fontSize: isClient && isMobile ? '0.8rem' : '0.7rem',
+                zIndex: isClient && isMobile ? '50' : '10'
               }"
               aria-label="下一張"
             >›</NuxtLink>
