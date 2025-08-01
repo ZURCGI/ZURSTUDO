@@ -54,7 +54,7 @@
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
               width: isMobile ? '100vw' : '1000px',
-              height: isMobile ? '50vh' : '562px'
+              height: isMobile ? '65vh' : '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
