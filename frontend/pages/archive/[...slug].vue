@@ -25,11 +25,11 @@
                 'left-2 md:left-0': true
               }"
               :style="{
-                top: isMobile ? '-20px' : '-20px',
-                transform: isMobile ? 'none' : 'none',
-                width: isMobile ? '14px' : '14px',
-                height: isMobile ? '14px' : '14px',
-                fontSize: isMobile ? '0.7rem' : '0.7rem'
+                top: isClient && isMobile ? '-20px' : '-20px',
+                transform: isClient && isMobile ? 'none' : 'none',
+                width: isClient && isMobile ? '14px' : '14px',
+                height: isClient && isMobile ? '14px' : '14px',
+                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
@@ -43,18 +43,18 @@
                 'right-2 md:right-0': true
               }"
               :style="{
-                top: isMobile ? '-20px' : '-20px',
-                transform: isMobile ? 'none' : 'none',
-                width: isMobile ? '14px' : '14px',
-                height: isMobile ? '14px' : '14px',
-                fontSize: isMobile ? '0.7rem' : '0.7rem'
+                top: isClient && isMobile ? '-20px' : '-20px',
+                transform: isClient && isMobile ? 'none' : 'none',
+                width: isClient && isMobile ? '14px' : '14px',
+                height: isClient && isMobile ? '14px' : '14px',
+                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
               }"
               aria-label="下一張"
             >›</NuxtLink>
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
-              width: isMobile ? '100vw' : '1000px',
-              height: isMobile ? '65vh' : '562px'
+              width: isClient && isMobile ? '100vw' : '1000px',
+              height: isClient && isMobile ? '65vh' : '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
@@ -63,7 +63,7 @@
                  <div class="flex flex-col items-center gap-3 text-white">
                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                    <span class="text-sm">載入 360° 全景中...</span>
-                   <span v-if="isMobile" class="text-xs text-gray-300 mt-2">自動旋轉載入中，請稍候...</span>
+                   <span v-if="isClient && isMobile" class="text-xs text-gray-300 mt-2">自動旋轉載入中，請稍候...</span>
                  </div>
                </div>
             </div>
@@ -87,8 +87,8 @@
                 v-bind="videoAttributes"
                 class="block"
                 @canplay="onMediaReady"
-                @mouseenter="!isMobile && playVideo()"
-                @mouseleave="!isMobile && pauseVideo()"
+                @mouseenter="isClient && !isMobile && playVideo()"
+                @mouseleave="isClient && !isMobile && pauseVideo()"
                 style="max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;"
               >
                 <source :src="media.url" type="video/mp4" />
@@ -157,6 +157,8 @@ const isFullscreen = ref(false)
 
 // 響應式裝置判斷
 const isMobile = ref(false)
+const isClient = ref(false)
+
 function updateIsMobile() {
   if (typeof window !== 'undefined') {
     isMobile.value = window.innerWidth < 1024 // 包含 iPad 在內
@@ -165,6 +167,11 @@ function updateIsMobile() {
 
 // 影片屬性計算
 const videoAttributes = computed(() => {
+  // 在客戶端渲染前使用默認值避免 hydration mismatch
+  if (!isClient.value) {
+    return { loop: true, preload: 'metadata' }
+  }
+  
   if (isMobile.value) {
     // 手機版：自動播放、靜音（必須）、循環、內聯播放
     return { autoplay: true, muted: true, loop: true, playsinline: true }
@@ -175,6 +182,7 @@ const videoAttributes = computed(() => {
 })
 
 onMounted(() => {
+  isClient.value = true
   updateIsMobile()
   window.addEventListener('resize', updateIsMobile)
 })
@@ -278,7 +286,7 @@ watch(media, async (newMedia) => {
   };
 
   // 4. 如果是手機，就覆蓋掉需要修改的設定
-  if (isMobile.value) {
+  if (isClient.value && isMobile.value) {
     console.log("[Mobile Detect] 手機裝置，啟用自動播放設定。");
     config.navbar = false; // 手機不顯示控制列
     // 修改插件設定，讓它自動開始
