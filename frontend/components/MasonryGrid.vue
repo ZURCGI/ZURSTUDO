@@ -246,12 +246,8 @@ watch(
                 mousemove: false,
                 // 增強觸控響應
                 touchmoveTwoFingers: true,
-                // 手機端容器設置
-                containerClass: 'mobile-viewer',
                 // 防止手機端跳動
                 defaultZoomLvl: 0,
-                // 防止滾動衝突
-                preventScroll: true,
                 // 手機端控制優化
                 moveSpeed: 2.5,
                 zoomSpeed: 2.0,

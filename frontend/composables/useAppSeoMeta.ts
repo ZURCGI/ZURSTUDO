@@ -47,7 +47,7 @@ export function useAppSeoMeta(options: SeoOptions) {
       const { token } = useAuth()
       const headers: Record<string, string> = {}
       
-      if (token.value) {
+      if (token && token.value) {
         headers['Authorization'] = `Bearer ${token.value}`
       }
       

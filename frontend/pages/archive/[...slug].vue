@@ -285,7 +285,6 @@ watch(media, async (newMedia) => {
     // 修改插件設定，讓它自動開始
     config.plugins = [
       [AutorotatePlugin, {
-        autostart: true,
         autorotateSpeed: '3rpm', // 加快到每分鐘3圈
         autorotatePitch: '5deg',
       }]
