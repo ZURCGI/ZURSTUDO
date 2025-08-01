@@ -160,7 +160,7 @@ const isFullscreen = ref(false)
 const isMobile = ref(false)
 function updateIsMobile() {
   if (typeof window !== 'undefined') {
-    isMobile.value = window.innerWidth < 768
+    isMobile.value = window.innerWidth < 1024 // 包含 iPad 在內
   }
 }
 

@@ -163,7 +163,7 @@ const columns = computed(() => columnsProp ?? columnsRef.value)
 // 手機端檢測
 const isMobile = computed(() => {
   if (process.client && window) {
-    return window.innerWidth < 768
+    return window.innerWidth < 1024 // 包含 iPad 在內
   }
   return false
 })
