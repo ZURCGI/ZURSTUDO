@@ -13,7 +13,7 @@
         :key="media.publicId"
         class="media-item-wrapper absolute inset-0"
       >
-        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-8' : 'mt-16'">
+        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-4' : 'mt-16'">
           <div class="relative" style="display: inline-block;">
             <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側上方） -->
             <NuxtLink
@@ -25,7 +25,7 @@
                 'left-2 md:left-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '-20px' : '-20px',
+                top: isClient && isMobile ? '-35px' : '-20px',
                 transform: isClient && isMobile ? 'none' : 'none',
                 width: isClient && isMobile ? '14px' : '14px',
                 height: isClient && isMobile ? '14px' : '14px',
