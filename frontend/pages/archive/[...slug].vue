@@ -265,64 +265,98 @@ watch(media, async (newMedia) => {
     if (newMedia.type === 'view360') {
       await nextTick();
       
-      // 使用統一的錯誤處理器
-      const errorHandler = useErrorHandler()
-      
       const initViewer = async () => {
         if (!viewerContainer.value) return;
         
-        if (viewerContainer.value.offsetWidth > 0) {
+        if (viewerContainer.value && viewerContainer.value.offsetWidth > 0) {
           const { Viewer } = await import('@photo-sphere-viewer/core');
-          viewerInstance.value = new Viewer({
+          
+          // 手機版使用最簡單的配置
+          const viewerConfig = isMobile.value ? {
             container: viewerContainer.value,
             panorama: newMedia.url,
-            navbar: isMobile.value ? ['autorotate', 'fullscreen'] : ['autorotate', 'zoom', 'fullscreen'],
+            navbar: false,
+            size: {
+              width: viewerContainer.value.offsetWidth + 'px',
+              height: viewerContainer.value.offsetHeight + 'px'
+            },
+            // 手機版基本配置
             defaultZoomLvl: 0,
-            moveSpeed: isMobile.value ? 2.0 : 1.5,
-            zoomSpeed: isMobile.value ? 1.5 : 1,
-            mousewheel: !isMobile.value,
+            moveSpeed: 2.0,
+            zoomSpeed: 1.5,
+            mousewheel: false,
+            touchmoveTwoFingers: true,
+            keyboard: false,
+            // 手機版自動旋轉
+            autorotateLat: 0,
+            autorotateSpeed: '2rpm',
+            autorotateZoom: 0
+          } : {
+            container: viewerContainer.value,
+            panorama: newMedia.url,
+            navbar: ['autorotate', 'zoom', 'fullscreen'],
+            defaultZoomLvl: 0,
+            moveSpeed: 1.5,
+            zoomSpeed: 1,
+            mousewheel: true,
             touchmoveTwoFingers: true,
             size: {
-              width: viewerContainer.value.offsetWidth,
-              height: viewerContainer.value.offsetHeight
-            },
-            // 手機版自動旋轉
-            ...(isMobile.value && {
-              autorotateLat: 0,
-              autorotateSpeed: '2rpm',
-              autorotateZoom: 0
-            })
-          });
+              width: viewerContainer.value.offsetWidth + 'px',
+              height: viewerContainer.value.offsetHeight + 'px'
+            }
+          };
           
-          // 手機版自動開始旋轉
-          if (isMobile.value) {
-            setTimeout(() => {
-              if (viewerInstance.value) {
-                viewerInstance.value.startAutorotate();
+          try {
+            viewerInstance.value = new Viewer(viewerConfig);
+            
+            // 手機版自動開始旋轉（延遲執行）
+            if (isMobile.value) {
+              setTimeout(() => {
+                if (viewerInstance.value && typeof viewerInstance.value.startAutorotate === 'function') {
+                  try {
+                    viewerInstance.value.startAutorotate();
+                  } catch (error) {
+                    console.warn('Failed to start autorotate on init:', error);
+                  }
+                }
+              }, 2000); // 延長到 2 秒確保完全初始化
+            }
+            
+            animateEntrance();
+          } catch (error) {
+            console.error('Viewer initialization error:', error);
+            // 如果初始化失敗，嘗試最基本的配置
+            if (isMobile.value) {
+              try {
+                viewerInstance.value = new Viewer({
+                  container: viewerContainer.value,
+                  panorama: newMedia.url,
+                  navbar: false,
+                  size: {
+                    width: (viewerContainer.value?.offsetWidth || 400) + 'px',
+                    height: (viewerContainer.value?.offsetHeight || 300) + 'px'
+                  }
+                });
+                animateEntrance();
+              } catch (fallbackError) {
+                console.error('Fallback viewer initialization failed:', fallbackError);
               }
-            }, 1000);
+            }
           }
-          
-          animateEntrance();
         } else {
-          // 使用統一的延遲重試
-          await errorHandler.retryWithDelay(
-            () => {
-              if (viewerContainer.value?.offsetWidth > 0) {
-                return Promise.resolve()
-              }
-              return Promise.reject(new Error('Container not ready'))
-            },
-            10, // 最多重試 10 次
-            100 // 每次延遲 100ms
-          )
+          // 延遲重試
+          setTimeout(() => {
+            if (viewerContainer.value?.offsetWidth > 0) {
+              initViewer();
+            }
+          }, 100);
         }
       };
       
       try {
-        await initViewer()
+        await initViewer();
       } catch (error) {
-        console.error('Failed to initialize viewer:', error)
+        console.error('Failed to initialize viewer:', error);
       }
     }
   }
@@ -526,7 +560,13 @@ function onTouchStart(e: TouchEvent) {
   
   // 手機版：觸控時停止 View360 自動旋轉
   if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
-    viewerInstance.value.stopAutorotate();
+    try {
+      if (typeof viewerInstance.value.stopAutorotate === 'function') {
+        viewerInstance.value.stopAutorotate();
+      }
+    } catch (error) {
+      console.warn('Failed to stop autorotate:', error);
+    }
   }
 }
 function onTouchEnd(e: TouchEvent) {
@@ -548,8 +588,12 @@ function onTouchEnd(e: TouchEvent) {
   // 手機版：觸控結束後恢復 View360 自動旋轉
   if (isMobile.value && viewerInstance.value && media.value?.type === 'view360') {
     setTimeout(() => {
-      if (viewerInstance.value) {
-        viewerInstance.value.startAutorotate();
+      if (viewerInstance.value && typeof viewerInstance.value.startAutorotate === 'function') {
+        try {
+          viewerInstance.value.startAutorotate();
+        } catch (error) {
+          console.warn('Failed to start autorotate:', error);
+        }
       }
     }, 2000);
   }
