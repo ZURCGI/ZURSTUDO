@@ -272,14 +272,9 @@ watch(media, async (newMedia) => {
   const config: any = {
     container: container,
     panorama: newMedia.url,
-    navbar: ['autorotate', 'zoom', 'fullscreen'], // 桌機版的標準控制列
+    navbar: ['zoom', 'fullscreen'], // 桌機版移除自動旋轉按鈕
     defaultZoomLvl: 0,
-    plugins: [
-      [AutorotatePlugin, {
-        // 桌機版預設不自動播放，讓用戶點擊按鈕
-        autostart: false,
-      }]
-    ]
+    plugins: [] // 桌機版不使用自動旋轉插件
   };
 
   // 4. 如果是手機，就覆蓋掉需要修改的設定
