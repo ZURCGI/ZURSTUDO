@@ -9,6 +9,11 @@ export default defineNuxtPlugin(() => {
     try {
       return await originalFetch(request, options)
     } catch (error: any) {
+      // 忽略 401 認證錯誤（這是正常的未認證狀態）
+      if (error.status === 401) {
+        // 不記錄 401 錯誤，因為這是預期的行為
+        throw error
+      }
       // 特殊處理 404 API 錯誤
       if (error.status === 404 && typeof request === 'string' && request.includes('/api/')) {
         console.warn(`[GlobalErrorHandler] API 端點不存在: ${request}`)
