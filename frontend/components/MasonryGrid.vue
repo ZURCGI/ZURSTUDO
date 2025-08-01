@@ -50,6 +50,7 @@
           :ref="(el) => setCardRefs(el)"
           controls 
           preload="metadata"
+          :poster="`${item.url}#t=0.1`"
           class="w-full object-cover shadow"
           :style="{
             display: 'block',
@@ -366,6 +367,12 @@ function onVideoLoaded(event: Event) {
     // 手機端播放設置
     video.playsInline = true
     video.muted = false // 允許聲音
+    
+    // 嘗試設置影片的第一幀作為海報
+    if (video.readyState >= 1) {
+      // 如果影片已經載入到可以顯示第一幀，設置為海報
+      video.currentTime = 0.1
+    }
     
     // 手機端不自動播放，顯示播放按鈕
     showPlayButton(video)
