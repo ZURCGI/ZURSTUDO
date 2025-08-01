@@ -10,13 +10,13 @@
       ]"
     >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center h-8 md:h-10">
+        <div class="flex items-center h-10">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center h-8 md:h-10">
+          <NuxtLink to="/" class="flex items-center h-10">
             <img
               src="~/assets/ZURLOGO.png"
               alt="ZUR Studio"
-              class="h-6 md:h-8 w-auto"
+              class="h-8 w-auto"
             />
           </NuxtLink>
           <!-- 桌面端导航 & Instagram（移动端隐藏） -->
@@ -89,7 +89,7 @@
         </div>
       </div>
     </nav>
-    <main class="pt-8 md:pt-10" v-show="isLoaded">
+    <main class="pt-10" v-show="isLoaded">
       <slot />
     </main>
   </div>

@@ -122,11 +122,10 @@
 import { ref, computed, onMounted, nextTick, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useRuntimeConfig } from '#app'
-import { useAppSeoMeta } from '~/composables/useAppSeoMeta'
-import { useAuth } from '~/composables/useAuth'
+import { useAppSeoMeta } from '@/composables/useAppSeoMeta'
+import { useAuth } from '@/composables/useAuth'
 import { gsap } from 'gsap'
 import DetailPageImage from '@/components/DetailPageImage.vue'
-import { useErrorHandler } from '~/composables/useErrorHandler'
 
 interface MediaItem {
   publicId: string
@@ -192,11 +191,11 @@ async function loadMore() {
   if (loading.value || !hasMore.value) return
   loading.value = true
   try {
-    const res = await $fetch(`${apiBase}/media/list?page=${page.value}&limit=${limit}`)
+    const res = await $fetch(`${apiBase}/media/list?page=${page.value}&limit=${limit}`) as any
     const newItems = res.items || []
     // 避免重複
-    const existingIds = new Set(items.value.map(i => i.publicId))
-    const filtered = newItems.filter(i => !existingIds.has(i.publicId))
+    const existingIds = new Set(items.value.map((i: MediaItem) => i.publicId))
+    const filtered = newItems.filter((i: any) => !existingIds.has(i.publicId))
     items.value = [...items.value, ...filtered]
     hasMore.value = res.pagination?.hasMore ?? (filtered.length === limit)
     page.value += 1
