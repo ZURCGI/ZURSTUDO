@@ -51,24 +51,19 @@ export function useAppSeoMeta(options: SeoOptions) {
         headers['Authorization'] = `Bearer ${token.value}`
       }
       
-      siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
-        headers,
-        // 添加錯誤處理，避免 401 錯誤導致重複請求
-        onResponseError: (error: any) => {
-          if (error.response?.status === 401) {
-            // 401 錯誤是正常的，因為未登入用戶無法訪問設置
-            console.log('[useAppSeoMeta] Settings API requires auth, using defaults');
-            siteSetting.value = {}
-            return
-          }
-          throw error
+      try {
+        siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
+          headers
+        })
+      } catch (error: any) {
+        // 401 錯誤是正常的，因為未登入用戶無法訪問設置
+        if (error.response?.status === 401) {
+          console.log('[useAppSeoMeta] Settings API requires auth, using defaults');
+        } else {
+          console.log('[useAppSeoMeta] Settings API failed, using defaults:', error)
         }
-      })
-    } catch (e) {
-      // 任何錯誤都使用默認設置
-      console.log('[useAppSeoMeta] Settings API failed, using defaults:', e)
-      siteSetting.value = {}
-    }
+        siteSetting.value = {}
+      }
     injectHead()
   })
 
