@@ -44,6 +44,7 @@
     "cloudinary": "^1.41.3",
     "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.1",
     "express-rate-limit": "^7.5.0",
     "geoip-lite": "^1.4.10",
     "helmet": "^8.1.0",
