@@ -161,12 +161,14 @@ const rowGap = computed(() => rowGapProp ?? gap ?? 8)
 const columnsRef = ref(columnsProp ?? 3)
 const columns = computed(() => columnsProp ?? columnsRef.value)
 
-// 手機端檢測
-const isMobile = computed(() => {
-  if (process.client && window) {
-    return window.innerWidth < 1024 // 包含 iPad 在內
+// 手機端檢測 - 修復 hydration mismatch
+const isMobile = ref(false)
+
+onMounted(() => {
+  // 在客戶端初始化時設置 isMobile 值
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth < 1024 // 包含 iPad 在內
   }
-  return false
 })
 
 // 用來初始化 360° viewer

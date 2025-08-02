@@ -9,14 +9,14 @@
     <div
       ref="mediaContainer"
       class="relative w-full"
-      :style="isClient && isMobile ? 'perspective: 1200px; min-height: 30vh;' : 'perspective: 1200px; min-height: 50vh;'"
+      :style="'perspective: 1200px; min-height: 50vh;'"
     >
       <div
         v-if="media"
         :key="media.publicId"
         class="media-item-wrapper absolute inset-0"
       >
-        <div class="media-item-wrapper flex items-center justify-center" :class="isClient && isMobile ? 'mt-4' : 'mt-16'">
+        <div class="media-item-wrapper flex items-center justify-center" :class="'mt-16'">
           <div class="relative" style="display: inline-block;">
             <!-- 上一頁按鈕（桌面版：圖片上方左側，手機版：左側上方） -->
             <NuxtLink
@@ -28,11 +28,11 @@
                 'left-2 md:left-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '-35px' : '-20px',
-                transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '14px' : '14px',
-                height: isClient && isMobile ? '14px' : '14px',
-                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
+                top: '-20px',
+                transform: 'none',
+                width: '14px',
+                height: '14px',
+                fontSize: '0.7rem'
               }"
               aria-label="上一張"
             >‹</NuxtLink>
@@ -46,18 +46,18 @@
                 'right-2 md:right-0': true
               }"
               :style="{
-                top: isClient && isMobile ? '-35px' : '-20px',
-                transform: isClient && isMobile ? 'none' : 'none',
-                width: isClient && isMobile ? '14px' : '14px',
-                height: isClient && isMobile ? '14px' : '14px',
-                fontSize: isClient && isMobile ? '0.7rem' : '0.7rem'
+                top: '-20px',
+                transform: 'none',
+                width: '14px',
+                height: '14px',
+                fontSize: '0.7rem'
               }"
               aria-label="下一張"
             >›</NuxtLink>
             <!-- 360° 全景 -->
             <div v-if="media.type === 'view360'" class="block mx-auto relative" :style="{
-              width: isClient && isMobile ? '100vw' : '1000px',
-              height: isClient && isMobile ? '80vh' : '562px'
+              width: '1000px',
+              height: '562px'
             }">
               <div ref="viewerContainer" style="width:100%; height:100%; border-radius: 8px; overflow: hidden;"></div>
               
@@ -66,7 +66,7 @@
                  <div class="flex flex-col items-center gap-3 text-white">
                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                    <span class="text-sm">載入 360° 全景中...</span>
-                   <span v-if="isClient && isMobile" class="text-xs text-gray-300 mt-2">自動旋轉載入中，請稍候...</span>
+                   <span class="text-xs text-gray-300 mt-2">自動旋轉載入中，請稍候...</span>
                  </div>
                </div>
             </div>
@@ -79,7 +79,7 @@
                 :height="720"
                 class="block"
                 @loaded="onMediaReady"
-                :style="isClient && isMobile ? 'max-width: 100vw; max-height: 70vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;' : 'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
+                :style="'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
               />
               <!-- 上一頁/下一頁按鈕 ... -->
             </div>
@@ -90,9 +90,9 @@
                 v-bind="videoAttributes"
                 class="block"
                 @canplay="onMediaReady"
-                @mouseenter="isClient && !isMobile && playVideo()"
-                @mouseleave="isClient && !isMobile && pauseVideo()"
-                :style="isClient && isMobile ? 'max-width: 100vw; max-height: 70vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;' : 'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
+                @mouseenter="playVideo()"
+                @mouseleave="pauseVideo()"
+                :style="'max-width: 100vw; max-height: 80vh; width: auto; height: auto; object-fit: contain; margin: 0 auto;'"
               >
                 <source :src="media.url" type="video/mp4" />
                 <track kind="captions" :src="`/subtitles/${publicId}.vtt`" srclang="zh" label="中文字幕" default />
@@ -105,7 +105,7 @@
       </div>
     </div>
     <!-- 描述文字容器 -->
-    <div ref="descriptionWrapper" :class="isClient && isMobile ? 'mt-2' : 'mt-4'" class="text-center text-gray-600">
+    <div ref="descriptionWrapper" :class="'mt-4'" class="text-center text-gray-600">
       <p v-if="media">{{ media.description }}</p>
     </div>
 
@@ -158,7 +158,7 @@ const isAnimating = ref(false)
 const autoRotate = ref(false)
 const isFullscreen = ref(false)
 
-// 響應式裝置判斷
+// 響應式裝置判斷 - 修復 hydration mismatch
 const isMobile = ref(false)
 const isClient = ref(false)
 
@@ -289,7 +289,7 @@ watch(media, async (newMedia) => {
   };
 
   // 4. 如果是手機，就覆蓋掉需要修改的設定
-  if (isClient.value && isMobile.value) {
+  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
     console.log("[Mobile Detect] 手機裝置，啟用自動播放設定。");
     config.navbar = false; // 手機不顯示控制列
     // 修改插件設定，讓它自動開始
