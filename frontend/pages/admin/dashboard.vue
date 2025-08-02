@@ -279,17 +279,19 @@ const formatDate = (dateString: string) => {
 onMounted(async () => {
   await initUser()
   await loadStats()
-  // 延遲渲染圖表，確保數據已加載和 DOM 已渲染
-  await nextTick()
-  // 再等待一下確保 canvas 元素已經準備好
-  setTimeout(() => {
-    renderTrendChart()
-  }, 100)
+  // 【修改】移除這裡所有的圖表渲染邏輯
 })
 
-watch(stats, () => {
-  renderTrendChart()
-}, { deep: true })
+// watch 負責在數據變化後，等待 DOM 更新，然後才渲染圖表
+watch(stats, async (newStats) => {
+  // 確保有數據可供渲染
+  if (newStats && newStats.visitTrend && newStats.visitTrend.length > 0) {
+    // 【核心修改】等待 Vue 完成 DOM 更新
+    await nextTick();
+    // 現在，v-if 已經執行完畢，<canvas> 元素保證存在於頁面上
+    renderTrendChart();
+  }
+}, { deep: true }); // deep watch 依然是必要的
 
 onUnmounted(() => {
   // 組件卸載時清理圖表

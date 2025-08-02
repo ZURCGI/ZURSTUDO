@@ -33,6 +33,11 @@ onMounted(async () => {
     // 動態導入 chartjs-chart-geo
     const ChartGeo = await import('chartjs-chart-geo')
     
+    // 檢查必要的組件是否存在
+    if (!ChartGeo.ChoroplethController) {
+      throw new Error('ChoroplethController 組件載入失敗')
+    }
+    
     // 註冊地理圖表組件
     Chart.register(ChartGeo.ChoroplethController)
 
@@ -41,6 +46,12 @@ onMounted(async () => {
     if (!worldRes.ok) throw new Error('載入地圖檔失敗')
     const topo = await worldRes.json()
     const world = feature(topo, topo.objects.countries)
+
+    // 檢查數據有效性
+    if (!props.countryStats || props.countryStats.length === 0) {
+      error.value = '沒有國家統計數據可供顯示'
+      return
+    }
 
     const maxCount = Math.max(...props.countryStats.map(d => d.count), 1)
     const chartData = {
@@ -59,38 +70,42 @@ onMounted(async () => {
     }
 
     const ctx = canvasRef.value.getContext('2d')
-    if (ctx) {
-      if (chartInstance) {
-        chartInstance.destroy()
-      }
-      
-      chartInstance = new Chart(ctx, {
-        type: 'choropleth',
-        data: {
-          labels: world.features.map((f: any) => f.properties.name),
-          datasets: [chartData]
+    if (!ctx) {
+      throw new Error('無法獲取 Canvas 2D 上下文')
+    }
+
+    // 清理舊的圖表實例
+    if (chartInstance) {
+      chartInstance.destroy()
+      chartInstance = null
+    }
+    
+    chartInstance = new Chart(ctx, {
+      type: 'choropleth',
+      data: {
+        labels: world.features.map((f: any) => f.properties.name),
+        datasets: [chartData]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        showOutline: true,
+        scales: {
+          projection: {
+            axis: 'x',
+            projection: 'equalEarth'
+          }
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          showOutline: true,
-          scales: {
-            projection: {
-              axis: 'x',
-              projection: 'equalEarth'
-            }
-          },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (c: any) => `${c.raw.feature.properties.name}: ${c.raw.value} 次`,
-              },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (c: any) => `${c.raw.feature.properties.name}: ${c.raw.value} 次`,
             },
           },
-        }
-      })
-    }
+        },
+      }
+    })
   } catch (e: any) {
     error.value = `圖表渲染失敗: ${e.message}`
     console.error('VisitorMap chart error:', e)
