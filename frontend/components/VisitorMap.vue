@@ -7,15 +7,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { ChoroplethController, ChoroplethElement, ProjectionScale } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
 
-// 註冊所有 Chart.js 組件
+// 註冊 Chart.js 核心組件
 Chart.register(...registerables)
-// 註冊地理圖表組件
-Chart.register(ChoroplethController, ChoroplethElement, ProjectionScale)
 
 const props = defineProps<{
   countryStats: { country: string; count: number }[]
@@ -25,16 +22,21 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const error = ref('')
 let chartInstance: Chart | null = null
 
-const renderChart = async () => {
-  // 因為父元件的 v-if 保證了 canvasRef 存在，這裡可以更自信地操作
+onMounted(async () => {
+  await nextTick()
   if (!canvasRef.value) {
-    error.value = 'Canvas 掛載失敗。'
+    error.value = 'Canvas 元素掛載失敗。'
     return
   }
 
   try {
-    if (chartInstance) chartInstance.destroy()
+    // 動態導入 chartjs-chart-geo
+    const ChartGeo = await import('chartjs-chart-geo')
+    
+    // 註冊地理圖表組件
+    Chart.register(ChartGeo.ChoroplethController)
 
+    // 載入世界地圖數據
     const worldRes = await fetch('/world-110m.json')
     if (!worldRes.ok) throw new Error('載入地圖檔失敗')
     const topo = await worldRes.json()
@@ -43,10 +45,10 @@ const renderChart = async () => {
     const maxCount = Math.max(...props.countryStats.map(d => d.count), 1)
     const chartData = {
       label: '訪客數',
-      data: world.features.map((f) => {
-        const stat = props.countryStats.find(d => d.country === f.properties.iso_a3)
-        return { feature: f, value: stat?.count || 0 }
-      }),
+      data: world.features.map((f: any) => ({
+        feature: f,
+        value: props.countryStats.find(d => d.country === f.properties.iso_a3)?.count || 0
+      })),
       backgroundColor: (ctx: any) => {
         const value = ctx.dataset.data[ctx.dataIndex]?.value || 0
         const alpha = 0.1 + (value / maxCount) * 0.8
@@ -56,26 +58,27 @@ const renderChart = async () => {
       borderWidth: 0.5,
     }
 
-    // --- 核心修改：在這裡手動設定比例尺 ---
-    Chart.defaults.scales.projection = ProjectionScale;
-
     const ctx = canvasRef.value.getContext('2d')
     if (ctx) {
+      if (chartInstance) {
+        chartInstance.destroy()
+      }
+      
       chartInstance = new Chart(ctx, {
         type: 'choropleth',
-        data: { 
-          labels: world.features.map((f: any) => f.properties.name), 
-          datasets: [chartData] 
+        data: {
+          labels: world.features.map((f: any) => f.properties.name),
+          datasets: [chartData]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           showOutline: true,
-          scales: { 
-            projection: { // 現在 Chart.js 應該能認出這個 key 了
+          scales: {
+            projection: {
               axis: 'x',
-              projection: 'equalEarth' 
-            } 
+              projection: 'equalEarth'
+            }
           },
           plugins: {
             legend: { display: false },
@@ -92,19 +95,20 @@ const renderChart = async () => {
     error.value = `圖表渲染失敗: ${e.message}`
     console.error('VisitorMap chart error:', e)
   }
-}
+})
 
-// onMounted 是渲染此元件的最佳時機
-onMounted(async () => {
-  // 使用 nextTick 確保萬無一失
-  await nextTick()
-  renderChart()
+// 清理圖表實例
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.destroy()
+    chartInstance = null
+  }
 })
 </script>
 
 <style scoped>
-canvas { 
-  width: 100%; 
-  height: 100%; 
+canvas {
+  width: 100%;
+  height: 100%;
 }
 </style>

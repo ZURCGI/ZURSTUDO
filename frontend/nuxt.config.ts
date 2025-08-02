@@ -1,5 +1,6 @@
 // nuxt.config.ts
 import { defineNuxtConfig } from 'nuxt/config'
+import { fileURLToPath } from 'url'
 
 export default defineNuxtConfig({
   // ── 相容性日期 ───────────────────────────────────────
@@ -113,6 +114,11 @@ export default defineNuxtConfig({
     // 優化依賴項
     optimizeDeps: {
       include: ['three', 'gsap', '@photo-sphere-viewer/core']
+    },
+    resolve: {
+      alias: {
+        '@chartgeo': fileURLToPath(new URL('./node_modules/chartjs-chart-geo/build/index.js', import.meta.url))
+      }
     }
   },
 
