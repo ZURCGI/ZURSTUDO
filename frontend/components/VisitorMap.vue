@@ -9,13 +9,13 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { ChoroplethController, ChoroplethElement, ProjectionScale } from 'chartjs-chart-geo'
+import { ChoroplethController } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
 
 // 註冊所有 Chart.js 組件
 Chart.register(...registerables)
 // 註冊地理圖表組件
-Chart.register(ChoroplethController, ChoroplethElement, ProjectionScale)
+Chart.register(ChoroplethController)
 
 const props = defineProps<{
   countryStats: { country: string; count: number }[]
