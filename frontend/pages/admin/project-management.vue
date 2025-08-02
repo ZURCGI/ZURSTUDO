@@ -169,6 +169,11 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { useAuth } from '@/composables/useAuth'
 
+definePageMeta({
+  requiresAuth: true,
+  layout: 'admin',
+})
+
 const config = useRuntimeConfig()
 const { initUser } = useAuth()
 
