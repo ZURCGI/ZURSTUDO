@@ -71,7 +71,7 @@
           <NuxtLink
             to="/info"
             class="block text-gray-800 hover:text-black py-3 px-2 rounded-lg hover:bg-gray-100 transition-colors"
-            exact-active-class="bg-gray-50 text-gray-700 border-l-4 border-gray-500"
+
             @click="menuOpen = false"
           >
             Info
