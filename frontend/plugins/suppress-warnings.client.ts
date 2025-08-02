@@ -163,6 +163,15 @@ export default defineNuxtPlugin(() => {
         return; // 不顯示 Hydration 不匹配警告
       }
       
+      // 過濾 CLS 累積值過高警告（除非真的很嚴重）
+      if (typeof message === 'string' && 
+          message.includes('CLS 累積值過高') && 
+          args.length > 1 && 
+          typeof args[1] === 'number' && 
+          args[1] < 0.5) {
+        return; // 不顯示較低的 CLS 警告
+      }
+      
       // 顯示其他警告
       originalWarn.apply(console, args);
     };

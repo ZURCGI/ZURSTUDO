@@ -2,7 +2,7 @@ import { defineEventHandler, readBody } from 'h3'
 
 // 定義模型設定 - 支援三個 AI 模型
 const modelConfigs = {
-  llama3: {
+  llama2: {
     endpoint: 'https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf',
     getPrompt: (body: any) => {
       return `<s>[INST] You are a world-class SEO expert and creative copywriter. Your task is to generate SEO-optimized content based on the user's website information. You must respond ONLY with a valid JSON object, without any introductory text, explanations, or markdown code blocks. The JSON object must contain these keys: "title" (string), "description" (string), "keywords" (string, comma-separated), and "faqList" (an array of objects, each with "question" and "answer" string properties).
@@ -91,7 +91,7 @@ Please generate the SEO content in Traditional Chinese (繁體中文) for the fo
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const modelKey = body.model === 'qwen1.5' ? 'qwen1_5' : (body.model === 'gemini_pro' ? 'gemini_pro' : 'llama3'); // 支援 gemini_pro
+  const modelKey = body.model === 'qwen1.5' ? 'qwen1_5' : (body.model === 'gemini_pro' ? 'gemini_pro' : 'llama2'); // 支援 gemini_pro
   const config = modelConfigs[modelKey];
 
   if (process.env.NODE_ENV === 'development') {
