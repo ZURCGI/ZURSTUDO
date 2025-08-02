@@ -66,7 +66,7 @@
         </div>
       </div>
       <!-- 移动端折叠菜单 -->
-      <div v-if="menuOpen" class="md:hidden bg-white/20 backdrop-blur-lg border-t border-gray-200/50">
+      <div v-if="menuOpen" class="md:hidden bg-white/10 backdrop-blur-xl border-t border-gray-200/30" style="background-color: rgba(255, 255, 255, 0.1) !important;">
         <div class="px-4 pt-2 pb-4 space-y-1 uppercase text-sm">
           <NuxtLink
             to="/info"
