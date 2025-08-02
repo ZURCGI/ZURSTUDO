@@ -31,6 +31,7 @@ export class User {
   @Column({
     type: 'enum',
     enum: UserRole,
+    enumName: 'user_role_enum', // 明確指定資料庫中的枚舉名稱
     default: UserRole.USER,
   })
   role: UserRole;

@@ -8,11 +8,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
-import { Chart } from 'chart.js'
-import { ChoroplethController } from 'chartjs-chart-geo'
+import { Chart, registerables } from 'chart.js'
+import { ChoroplethController, ChoroplethElement, ProjectionScale } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
 
-Chart.register(ChoroplethController)
+// 註冊所有 Chart.js 組件
+Chart.register(...registerables)
+// 註冊地理圖表組件
+Chart.register(ChoroplethController, ChoroplethElement, ProjectionScale)
 
 const props = defineProps<{
   countryStats: { country: string; count: number }[]
@@ -65,7 +68,12 @@ const renderChart = async () => {
           responsive: true,
           maintainAspectRatio: false,
           showOutline: true,
-          scales: { xy: { projection: 'equalEarth' } },
+          scales: { 
+            projection: { 
+              axis: 'x',
+              projection: 'equalEarth' 
+            } 
+          },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -79,6 +87,7 @@ const renderChart = async () => {
     }
   } catch (e: any) {
     error.value = `圖表渲染失敗: ${e.message}`
+    console.error('VisitorMap chart error:', e)
   }
 }
 
