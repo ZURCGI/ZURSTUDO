@@ -53,7 +53,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showDetails: process.env.NODE_ENV === 'development'
+  showDetails: false
 })
 
 const emit = defineEmits<{

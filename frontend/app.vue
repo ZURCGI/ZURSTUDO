@@ -30,7 +30,7 @@ import { onMounted } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
 // 檢查是否為開發環境
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isDevelopment = ref(false)
 
 // 全域錯誤處理
 const handleGlobalError = (error: Error, errorInfo: any) => {
@@ -38,10 +38,15 @@ const handleGlobalError = (error: Error, errorInfo: any) => {
   
   // 可以在這裡添加錯誤報告邏輯
   // 例如發送到 Sentry 或其他錯誤追蹤服務
-  if (process.env.NODE_ENV === 'production') {
-    // reportError(error, errorInfo)
-  }
+  // 注意：在 Nuxt 3 中，process.env 在客戶端可能不可用
 }
+
+onMounted(() => {
+  // 在客戶端檢查環境
+  if (typeof window !== 'undefined') {
+    isDevelopment.value = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  }
+})
 
 // 重試處理
 const handleRetry = () => {

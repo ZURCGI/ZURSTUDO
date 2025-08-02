@@ -97,6 +97,8 @@ export default defineNuxtPlugin(() => {
     };
     
     // 優化滾動性能
+    let requestTick: (() => void) | null = null;
+    
     const optimizeScrollPerformance = () => {
       // 在 INFO 頁面跳過滾動優化
       if (isInfoPage()) {
@@ -111,7 +113,7 @@ export default defineNuxtPlugin(() => {
         ticking = false;
       };
       
-      const requestTick = () => {
+      requestTick = () => {
         if (!ticking) {
           requestAnimationFrame(updateScroll);
           ticking = true;
@@ -124,7 +126,9 @@ export default defineNuxtPlugin(() => {
     // 清理函數
     const cleanup = () => {
       // 清理事件監聽器和其他資源
-      window.removeEventListener('scroll', requestTick);
+      if (requestTick) {
+        window.removeEventListener('scroll', requestTick);
+      }
     };
     
     // 初始化所有優化
