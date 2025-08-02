@@ -153,8 +153,7 @@ definePageMeta({
   layout: 'admin',
 })
 
-// 正確導入和註冊 Chart.js
-import { Chart, registerables } from 'chart.js'
+// 註冊 Chart.js 組件
 Chart.register(...registerables)
 
 const { initUser } = useAuth()
