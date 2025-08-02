@@ -472,6 +472,7 @@ watch(
 function updateColumns() {
   // 若有 columns prop 則不自動調整
   if (columnsProp) return
+  if (typeof window === 'undefined') return
   const w = window.innerWidth
   columnsRef.value = w < 640 ? 1 : w < 1024 ? 2 : 3
 }
@@ -499,15 +500,21 @@ function onCardClick(e) {
     // 直接從 currentTarget 獲取 data-id，因為 NuxtLink 本身就有 data-id 屬性
     const targetElement = e.currentTarget
     
-    // 添加安全檢查
-    if (!items.value || !targetElement || !targetElement.dataset) {
-      console.warn('[MasonryGrid] Mobile click: missing target element or dataset')
+    // 添加更嚴格的安全檢查
+    if (!items.value || !targetElement) {
+      console.warn('[MasonryGrid] Mobile click: missing items or target element')
+      return
+    }
+    
+    // 檢查是否有 dataset 屬性
+    if (!targetElement.dataset) {
+      console.warn('[MasonryGrid] Mobile click: target element has no dataset')
       return
     }
     
     const dataId = targetElement.dataset.id
     if (!dataId) {
-      console.warn('[MasonryGrid] Mobile click: missing data-id')
+      console.warn('[MasonryGrid] Mobile click: missing data-id attribute')
       return
     }
     

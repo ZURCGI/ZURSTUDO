@@ -26,6 +26,7 @@ const containerRef = ref<HTMLElement | null>(null)
 const threeInitialized = ref(false)
 const imageAspectRef = ref(1)
 let renderer, camera, scene, plane, uniforms, dataTexture, geometry, material
+let handleMouseMove, handleMouseLeave, handleResize
 
 const vertexShader = `
 uniform float time;
@@ -108,7 +109,7 @@ onMounted(async () => {
     plane = new THREE.Mesh(geometry, material)
     scene.add(plane)
 
-    function handleResize() {
+    handleResize = () => {
       if (!containerRef.value) return
       const width = containerRef.value.offsetWidth
       const height = containerRef.value.offsetHeight
@@ -128,7 +129,7 @@ onMounted(async () => {
     }
 
     const mouseState = { x: 0, y: 0, prevX: 0, prevY: 0, vX: 0, vY: 0 }
-    function handleMouseMove(e) {
+    handleMouseMove = (e) => {
       if (!containerRef.value) return
       const rect = containerRef.value.getBoundingClientRect()
       const x = (e.clientX - rect.left) / rect.width
@@ -137,7 +138,7 @@ onMounted(async () => {
       mouseState.vY = y - mouseState.prevY
       Object.assign(mouseState, { x, y, prevX: x, prevY: y })
     }
-    function handleMouseLeave() {
+    handleMouseLeave = () => {
       dataTexture.needsUpdate = true
       Object.assign(mouseState, { x: 0, y: 0, prevX: 0, prevY: 0, vX: 0, vY: 0 })
     }
@@ -174,18 +175,27 @@ onMounted(async () => {
     }
     animate()
 
-    onBeforeUnmount(() => {
-      containerRef.value?.removeEventListener('mousemove', handleMouseMove)
-      containerRef.value?.removeEventListener('mouseleave', handleMouseLeave)
-      window.removeEventListener('resize', handleResize)
-      if (renderer) renderer.dispose()
-      if (geometry) geometry.dispose()
-      if (material) material.dispose()
-      if (dataTexture) dataTexture.dispose()
-      if (uniforms.uTexture.value) uniforms.uTexture.value.dispose()
-    })
+
   } catch (error) {
     console.error('GridDistortion: Error initializing Three.js:', error)
   }
+})
+
+// 在 setup 函數外部正確註冊生命週期鉤子
+onBeforeUnmount(() => {
+  if (containerRef.value && handleMouseMove) {
+    containerRef.value.removeEventListener('mousemove', handleMouseMove)
+  }
+  if (containerRef.value && handleMouseLeave) {
+    containerRef.value.removeEventListener('mouseleave', handleMouseLeave)
+  }
+  if (handleResize) {
+    window.removeEventListener('resize', handleResize)
+  }
+  if (renderer) renderer.dispose()
+  if (geometry) geometry.dispose()
+  if (material) material.dispose()
+  if (dataTexture) dataTexture.dispose()
+  if (uniforms?.uTexture?.value) uniforms.uTexture.value.dispose()
 })
 </script> 
