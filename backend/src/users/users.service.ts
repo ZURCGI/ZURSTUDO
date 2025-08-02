@@ -85,7 +85,7 @@ export class UsersService implements OnModuleInit {
         passwordHash: hashedPassword,
         email,
         isAdmin: false,
-        role: UserRole.MEDIA_EDITOR,
+        role: UserRole.EDITOR, // 暫時使用 EDITOR 角色，直到資料庫遷移完成
       });
       
       const savedUser = await this.usersRepo.save(mediaEditor);
