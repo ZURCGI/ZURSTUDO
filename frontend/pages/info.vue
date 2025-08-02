@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-0">
-    <div class="w-full" style="aspect-ratio: 16/9; min-height: 300px;">
+    <div class="w-full" style="aspect-ratio: 16/9; min-height: 200px;">
       <GridDistortion :imageSrc="config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/v1749830240/ZURSTUDIO_nf1k8o.webp'" class="w-full h-full" />
     </div>
 
     <section ref="secAbout" class="max-w-4xl mx-auto py-8 px-4 opacity-0">
-      <h1 class="text-3xl font-bold mb-6">About ZUR / 關於 ZUR</h1>
-      <div class="mt-4 text-gray-700 text-lg md:text-xl font-medium block">
+      <h1 class="text-2xl md:text-3xl font-bold mb-4 md:mb-6">About ZUR / 關於 ZUR</h1>
+      <div class="mt-4 text-gray-700 text-base md:text-lg lg:text-xl font-medium block">
         <div class="font-semibold mb-2">Our Core Service / 我們的核心服務</div>
         <TextType
           :text="[
@@ -30,11 +30,11 @@
       </div>
     </section>
 
-     <section ref="secContact" class="max-w-4xl mx-auto py-12 px-4 opacity-0">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+     <section ref="secContact" class="max-w-4xl mx-auto py-8 md:py-12 px-4 opacity-0">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
         <div>
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">聯絡方式</h2>
-          <ul class="space-y-3 text-gray-700 text-base">
+          <h2 class="text-xl md:text-2xl font-semibold mb-3 md:mb-4 text-gray-800">聯絡方式</h2>
+          <ul class="space-y-2 md:space-y-3 text-gray-700 text-sm md:text-base">
             <li>+886 4 36035345</li>
             <li>No. 112, Dadun 7th St., Nantun Dist., Taichung City, Taiwan</li>
             <li>
@@ -44,11 +44,11 @@
             </li>
           </ul>
         </div>
-        <div class="flex justify-start">
+        <div class="flex justify-center md:justify-start">
           <img
             :src="config.public.cloudinaryCloudName ? `https://res.cloudinary.com/${config.public.cloudinaryCloudName}/image/upload/f_auto,q_auto/v1749631606/line-qr_xvdcic.png` : 'https://res.cloudinary.com/dfiwsow3h/image/upload/f_auto,q_auto/v1749631606/line-qr_xvdcic.png'"
             alt="ZUR LINE QR Code"
-            class="w-48 h-48 object-contain border rounded-lg shadow hover:scale-105 transition-transform duration-300"
+            class="w-32 h-32 md:w-48 md:h-48 object-contain border rounded-lg shadow hover:scale-105 transition-transform duration-300"
             loading="lazy"
             width="192"
             height="192"
@@ -58,24 +58,24 @@
     </section>
 
     <!-- FAQ 區塊 -->
-    <section class="max-w-4xl mx-auto py-8 px-4 mt-8">
-      <h2 class="text-2xl font-semibold mb-4">常見問答 FAQ</h2>
-      <div v-for="(faq, idx) in faqs" :key="idx" class="mb-4 border-b pb-2">
+    <section class="max-w-4xl mx-auto py-6 md:py-8 px-4 mt-6 md:mt-8">
+      <h2 class="text-xl md:text-2xl font-semibold mb-3 md:mb-4">常見問答 FAQ</h2>
+      <div v-for="(faq, idx) in faqs" :key="idx" class="mb-3 md:mb-4 border-b pb-2">
         <button
           class="w-full text-left flex justify-between items-center py-2 focus:outline-none transition hover:bg-gray-100 active:bg-gray-200 rounded-lg"
           @click="toggleFaq(idx)"
         >
-          <span class="font-medium text-gray-800">
-            {{ faq.question_en }}
-            <span class="text-sm text-gray-500 ml-2">{{ faq.question }}</span>
+          <span class="font-medium text-gray-800 text-sm md:text-base">
+            <div class="mb-1">{{ faq.question_en }}</div>
+            <div class="text-xs md:text-sm text-gray-500">{{ faq.question }}</div>
           </span>
           <svg :class="[openFaq === idx ? 'rotate-180' : '', 'w-5 h-5 transition-transform text-gray-400 hover:text-primary hover:scale-110']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         <div v-show="openFaq === idx" class="text-gray-600 mt-2 pl-2">
-          <div>{{ faq.answer_en }}</div>
-          <div class="text-sm text-gray-500 mt-1">{{ faq.answer }}</div>
+          <div class="text-sm md:text-base mb-1">{{ faq.answer_en }}</div>
+          <div class="text-xs md:text-sm text-gray-500">{{ faq.answer }}</div>
         </div>
       </div>
     </section>
@@ -226,5 +226,33 @@ onMounted(async () => {
 .nuset-hero-img:hover {
   transform: scale(1.03);
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* 手機端優化 */
+@media (max-width: 768px) {
+  .space-y-0 > div:first-child {
+    min-height: 200px;
+  }
+  
+  /* 改善觸控體驗 */
+  button {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+  
+  /* 改善文字可讀性 */
+  .text-sm {
+    line-height: 1.5;
+  }
+  
+  /* 改善間距 */
+  .py-6 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
 }
 </style>
