@@ -172,11 +172,25 @@
           <div class="flex gap-2 items-end">
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>緯度</label>
-              <input v-model.number="form.lat" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLat" @input="handleLatInput" />
+              <input 
+                :value="form.lat !== null ? form.lat.toString() : ''" 
+                @input="handleLatInput" 
+                @blur="validateLat" 
+                type="number" 
+                step="0.000001" 
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" 
+              />
             </div>
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>經度</label>
-              <input v-model.number="form.lng" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLng" @input="handleLngInput" />
+              <input 
+                :value="form.lng !== null ? form.lng.toString() : ''" 
+                @input="handleLngInput" 
+                @blur="validateLng" 
+                type="number" 
+                step="0.000001" 
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" 
+              />
             </div>
             <button type="button" @click="detectGeo" class="ml-2 px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-700">自動偵測</button>
           </div>
@@ -202,7 +216,7 @@
 definePageMeta({
   layout: 'admin'
 })
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRuntimeConfig } from '#app'
 
 const config = useRuntimeConfig()
@@ -257,6 +271,12 @@ onMounted(async () => {
     if (!Array.isArray(form.value.faqListEn)) {
       form.value.faqListEn = []
     }
+    
+    // 格式化緯度經度顯示
+    await nextTick()
+    formatLatDisplay()
+    formatLngDisplay()
+    
     fetchAiSuggest()
   } catch (error) {
     console.error('Failed to fetch settings:', error)
@@ -475,16 +495,34 @@ function handleLatInput(event: Event) {
   const target = event.target as HTMLInputElement;
   const value = target.value;
   
-  // 如果輸入的是部分值（如 .1369609），嘗試補全
+  // 如果輸入的是部分值（如 .1384039），嘗試補全
   if (value.startsWith('.') && value.length > 1) {
     const decimalPart = value.substring(1);
-    const fullValue = `24${value}`; // 台中地區緯度約為 24.1369609
+    const fullValue = `24${value}`; // 台中地區緯度約為 24.1384039
     const numValue = parseFloat(fullValue);
     
     if (!isNaN(numValue) && numValue >= -90 && numValue <= 90) {
       form.value.lat = numValue;
       target.value = fullValue;
     }
+  }
+  
+  // 處理負數情況
+  if (value.startsWith('-.')) {
+    const decimalPart = value.substring(2);
+    const fullValue = `-24.${decimalPart}`;
+    const numValue = parseFloat(fullValue);
+    
+    if (!isNaN(numValue) && numValue >= -90 && numValue <= 90) {
+      form.value.lat = numValue;
+      target.value = fullValue;
+    }
+  }
+  
+  // 處理正常數字輸入
+  const numValue = parseFloat(value);
+  if (!isNaN(numValue)) {
+    form.value.lat = numValue;
   }
 }
 
@@ -496,12 +534,50 @@ function handleLngInput(event: Event) {
   // 如果輸入的是部分值，嘗試補全
   if (value.startsWith('.') && value.length > 1) {
     const decimalPart = value.substring(1);
-    const fullValue = `120${value}`; // 台中地區經度約為 120.6544
+    const fullValue = `120.${decimalPart}`; // 台中地區經度約為 120.6546549
     const numValue = parseFloat(fullValue);
     
     if (!isNaN(numValue) && numValue >= -180 && numValue <= 180) {
       form.value.lng = numValue;
       target.value = fullValue;
+    }
+  }
+  
+  // 處理負數情況
+  if (value.startsWith('-.')) {
+    const decimalPart = value.substring(2);
+    const fullValue = `-120.${decimalPart}`;
+    const numValue = parseFloat(fullValue);
+    
+    if (!isNaN(numValue) && numValue >= -180 && numValue <= 180) {
+      form.value.lng = numValue;
+      target.value = fullValue;
+    }
+  }
+  
+  // 處理正常數字輸入
+  const numValue = parseFloat(value);
+  if (!isNaN(numValue)) {
+    form.value.lng = numValue;
+  }
+}
+
+// 格式化緯度顯示
+function formatLatDisplay() {
+  if (form.value.lat !== null && form.value.lat !== undefined) {
+    const latInput = document.querySelector('input[v-model.number="form.lat"]') as HTMLInputElement;
+    if (latInput) {
+      latInput.value = form.value.lat.toString();
+    }
+  }
+}
+
+// 格式化經度顯示
+function formatLngDisplay() {
+  if (form.value.lng !== null && form.value.lng !== undefined) {
+    const lngInput = document.querySelector('input[v-model.number="form.lng"]') as HTMLInputElement;
+    if (lngInput) {
+      lngInput.value = form.value.lng.toString();
     }
   }
 }
