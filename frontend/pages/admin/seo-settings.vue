@@ -172,11 +172,11 @@
           <div class="flex gap-2 items-end">
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>緯度</label>
-              <input v-model.number="form.lat" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLat" />
+              <input v-model.number="form.lat" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLat" @input="handleLatInput" />
             </div>
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>經度</label>
-              <input v-model.number="form.lng" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLng" />
+              <input v-model.number="form.lng" type="number" step="0.000001" class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-800 bg-gray-50" @blur="validateLng" @input="handleLngInput" />
             </div>
             <button type="button" @click="detectGeo" class="ml-2 px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-700">自動偵測</button>
           </div>
@@ -423,13 +423,86 @@ async function getCoordsFromAddress() {
 
 // GEO 經緯度 UX 優化
 function validateLat() {
-  if (typeof form.value.lat !== 'number' || isNaN(form.value.lat)) {
+  const lat = form.value.lat;
+  
+  // 檢查是否為有效數字
+  if (typeof lat !== 'number' || isNaN(lat)) {
     form.value.lat = null;
+    return;
+  }
+  
+  // 檢查緯度範圍 (-90 到 90)
+  if (lat < -90 || lat > 90) {
+    form.value.lat = null;
+    toast.value = '緯度必須在 -90 到 90 度之間';
+    setTimeout(() => toast.value = '', 3000);
+    return;
+  }
+  
+  // 檢查小數位數（最多6位）
+  const latStr = lat.toString();
+  if (latStr.includes('.') && latStr.split('.')[1].length > 6) {
+    form.value.lat = parseFloat(lat.toFixed(6));
   }
 }
+
 function validateLng() {
-  if (typeof form.value.lng !== 'number' || isNaN(form.value.lng)) {
+  const lng = form.value.lng;
+  
+  // 檢查是否為有效數字
+  if (typeof lng !== 'number' || isNaN(lng)) {
     form.value.lng = null;
+    return;
+  }
+  
+  // 檢查經度範圍 (-180 到 180)
+  if (lng < -180 || lng > 180) {
+    form.value.lng = null;
+    toast.value = '經度必須在 -180 到 180 度之間';
+    setTimeout(() => toast.value = '', 3000);
+    return;
+  }
+  
+  // 檢查小數位數（最多6位）
+  const lngStr = lng.toString();
+  if (lngStr.includes('.') && lngStr.split('.')[1].length > 6) {
+    form.value.lng = parseFloat(lng.toFixed(6));
+  }
+}
+
+// 處理緯度輸入
+function handleLatInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+  
+  // 如果輸入的是部分值（如 .1369609），嘗試補全
+  if (value.startsWith('.') && value.length > 1) {
+    const decimalPart = value.substring(1);
+    const fullValue = `24${value}`; // 台中地區緯度約為 24.1369609
+    const numValue = parseFloat(fullValue);
+    
+    if (!isNaN(numValue) && numValue >= -90 && numValue <= 90) {
+      form.value.lat = numValue;
+      target.value = fullValue;
+    }
+  }
+}
+
+// 處理經度輸入
+function handleLngInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const value = target.value;
+  
+  // 如果輸入的是部分值，嘗試補全
+  if (value.startsWith('.') && value.length > 1) {
+    const decimalPart = value.substring(1);
+    const fullValue = `120${value}`; // 台中地區經度約為 120.6544
+    const numValue = parseFloat(fullValue);
+    
+    if (!isNaN(numValue) && numValue >= -180 && numValue <= 180) {
+      form.value.lng = numValue;
+      target.value = fullValue;
+    }
   }
 }
 
