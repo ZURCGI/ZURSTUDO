@@ -18,12 +18,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     info: any,
     context: ExecutionContext,
   ): TUser | null {
-    this.logger.log(
-      `JWT Auth Guard - err: ${err}, user: ${user ? 'exists' : 'missing'}, info: ${info}`,
-    );
-
-    if (err || !user) {
+    // 只在有錯誤時記錄，避免記錄正常的未認證請求
+    if (err) {
       this.logger.error(`JWT Auth Guard failed - err: ${err}, info: ${info}`);
+    } else if (!user && info && info.message === 'No auth token') {
+      // 靜默處理無令牌的情況，這是預期行為
+      this.logger.debug(`JWT Auth Guard - No auth token provided`);
+    } else if (!user) {
+      this.logger.warn(`JWT Auth Guard - Invalid token or user not found`);
     }
 
     return super.handleRequest(err, user, info, context);

@@ -43,26 +43,21 @@ export function useAppSeoMeta(options: SeoOptions) {
   onMounted(async () => {
     // 取得全站 SEO 設定
     try {
-      // 檢查是否有認證 token
-      const { token } = useAuth()
-      const headers: Record<string, string> = {}
-      
-      if (token && token.value) {
-        headers['Authorization'] = `Bearer ${token.value}`
-      }
-      
-      try {
-        siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
-          headers
-        })
-      } catch (error: any) {
-        // 401 錯誤是正常的，因為未登入用戶無法訪問設置
-        if (error.response?.status === 401) {
-          console.log('[useAppSeoMeta] Settings API requires auth, using defaults');
-        } else {
-          console.log('[useAppSeoMeta] Settings API failed, using defaults:', error)
+      // 只在客戶端嘗試獲取設置，避免 SSR 問題
+      if (process.client) {
+        try {
+          siteSetting.value = await $fetch(`${config.public.apiBase}/settings`, { 
+            credentials: 'include'
+          })
+        } catch (error: any) {
+          // 401 錯誤是正常的，因為未登入用戶無法訪問設置
+          if (error.response?.status === 401) {
+            console.log('[useAppSeoMeta] Settings API requires auth, using defaults');
+          } else {
+            console.log('[useAppSeoMeta] Settings API failed, using defaults:', error)
+          }
+          siteSetting.value = {}
         }
-        siteSetting.value = {}
       }
     } catch (e) {
       // 任何其他錯誤都使用默認設置
