@@ -173,6 +173,7 @@
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>緯度</label>
               <input 
+                ref="latInputRef"
                 :value="form.lat !== null ? form.lat.toString() : ''" 
                 @input="handleLatInput" 
                 @blur="validateLat" 
@@ -184,6 +185,7 @@
             <div class="flex-1">
               <label class="block font-bold mb-1 flex items-center gap-1"><svg xmlns='http://www.w3.org/2000/svg' class='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 19.778l-.707.707M21 12h1M3 12H2m16.485-7.071l-.707-.707M4.222 4.222l-.707-.707' /></svg>經度</label>
               <input 
+                ref="lngInputRef"
                 :value="form.lng !== null ? form.lng.toString() : ''" 
                 @input="handleLngInput" 
                 @blur="validateLng" 
@@ -220,6 +222,11 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRuntimeConfig } from '#app'
 
 const config = useRuntimeConfig()
+
+// --- 在這裡加入新的 ref ---
+const latInputRef = ref<HTMLInputElement | null>(null);
+const lngInputRef = ref<HTMLInputElement | null>(null);
+
 const form = ref({
   siteTitle: '',
   siteTitleEn: '',
@@ -564,21 +571,15 @@ function handleLngInput(event: Event) {
 
 // 格式化緯度顯示
 function formatLatDisplay() {
-  if (form.value.lat !== null && form.value.lat !== undefined) {
-    const latInput = document.querySelector('input[v-model.number="form.lat"]') as HTMLInputElement;
-    if (latInput) {
-      latInput.value = form.value.lat.toString();
-    }
+  if (latInputRef.value) {
+    latInputRef.value.value = form.value.lat !== null && form.value.lat !== undefined ? form.value.lat.toString() : '';
   }
 }
 
 // 格式化經度顯示
 function formatLngDisplay() {
-  if (form.value.lng !== null && form.value.lng !== undefined) {
-    const lngInput = document.querySelector('input[v-model.number="form.lng"]') as HTMLInputElement;
-    if (lngInput) {
-      lngInput.value = form.value.lng.toString();
-    }
+  if (lngInputRef.value) {
+    lngInputRef.value.value = form.value.lng !== null && form.value.lng !== undefined ? form.value.lng.toString() : '';
   }
 }
 
@@ -768,6 +769,13 @@ const faqJsonLdValid = computed(() => {
 })
 // GEO JSON-LD 產生
 const geoJsonLd = computed(() => {
+  // --- 核心修改：在這裡進行類型轉換 ---
+  // 使用 parseFloat 確保緯度和經度是數字類型。
+  // 如果 form.lat 是 null 或無法轉換，parseFloat 會返回 NaN，
+  // JSON.stringify 會將 NaN 轉換為 null，這也是可接受的。
+  const latitudeAsNumber = parseFloat(form.value.lat);
+  const longitudeAsNumber = parseFloat(form.value.lng);
+
   return JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Place',
@@ -776,8 +784,9 @@ const geoJsonLd = computed(() => {
     'postalCode': form.value.zipcode,
     'geo': {
       '@type': 'GeoCoordinates',
-      'latitude': form.value.lat,
-      'longitude': form.value.lng
+      // 使用轉換後的數字
+      'latitude': isNaN(latitudeAsNumber) ? null : latitudeAsNumber,
+      'longitude': isNaN(longitudeAsNumber) ? null : longitudeAsNumber,
     }
   }, null, 2)
 })
