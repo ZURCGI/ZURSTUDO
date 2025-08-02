@@ -9,13 +9,13 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { ChoroplethController } from 'chartjs-chart-geo'
+import { ChoroplethController, ChoroplethElement, ProjectionScale } from 'chartjs-chart-geo'
 import { feature } from 'topojson-client'
 
 // 註冊所有 Chart.js 組件
 Chart.register(...registerables)
 // 註冊地理圖表組件
-Chart.register(ChoroplethController)
+Chart.register(ChoroplethController, ChoroplethElement, ProjectionScale)
 
 const props = defineProps<{
   countryStats: { country: string; count: number }[]
@@ -56,6 +56,9 @@ const renderChart = async () => {
       borderWidth: 0.5,
     }
 
+    // --- 核心修改：在這裡手動設定比例尺 ---
+    Chart.defaults.scales.projection = ProjectionScale;
+
     const ctx = canvasRef.value.getContext('2d')
     if (ctx) {
       chartInstance = new Chart(ctx, {
@@ -69,7 +72,7 @@ const renderChart = async () => {
           maintainAspectRatio: false,
           showOutline: true,
           scales: { 
-            projection: { 
+            projection: { // 現在 Chart.js 應該能認出這個 key 了
               axis: 'x',
               projection: 'equalEarth' 
             } 
