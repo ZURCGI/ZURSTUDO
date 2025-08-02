@@ -3,6 +3,7 @@
     class="archive-page-container"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
+    style="min-height: 100vh; position: relative;"
   >
     <!-- 媒體動畫容器 -->
     <div
@@ -507,16 +508,16 @@ onMounted(() => {
 const router = useRouter()
 const touchStartX = ref(0)
 function onTouchStart(e: TouchEvent) {
-  // 只在手機端啟用滑動導航
-  if (!isClient.value || !isMobile.value) return
+  // 在手機和平板上啟用滑動導航
+  if (!isClient.value) return
   
   touchStartX.value = e.changedTouches[0].clientX
   
   // 手機版：不干擾自動旋轉，讓它持續播放
 }
 function onTouchEnd(e: TouchEvent) {
-  // 只在手機端啟用滑動導航
-  if (!isClient.value || !isMobile.value) return
+  // 在手機和平板上啟用滑動導航
+  if (!isClient.value) return
   
   const dx = e.changedTouches[0].clientX - touchStartX.value
   const threshold = 50 // 滑動閾值
@@ -539,6 +540,13 @@ function onTouchEnd(e: TouchEvent) {
 
 <style scoped>
 a { text-decoration: none; color: inherit; }
+
+/* 確保整個頁面可以接收觸摸事件 */
+.archive-page-container {
+  min-height: 100vh;
+  position: relative;
+  touch-action: pan-y; /* 允許垂直滾動，但捕獲水平滑動 */
+}
 
 /* 載入動畫 */
 .view360-loading {
